@@ -2,6 +2,7 @@ import numpy as np
 from scipy import constants as const
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
+from materials import n_BBO, v_g_BBO
 
 
 # functions used for calculating phase matching
@@ -16,66 +17,6 @@ import matplotlib.pyplot as plt
 # everything else in SI units (m, s, W, etc.)
 # nothing has been explicitely vectorized, numpy arrays might work but not guaranteed
 
-def n_BBO(wavelength, extraordinary=False, theta=0):
-    """
-    Calculates the refractive index of BBO for a given wavelength in nm.
-    If extraordinary is True, calculates the extraordinary refractive index, at angle theta (in radians) to the optical axis.
-    If extraordinary is False, calculates the ordinary refractive index.
-    
-    Args:
-        wavelength (float): Wavelength in nm.
-        extraordinary (bool): Whether to calculate the extraordinary refractive index. Defaults to False.
-        theta (float): Angle in radians to the optical axis for extraordinary index. Defaults to 0.
-        
-    Returns:
-        float: Refractive index of BBO at the given wavelength.
-        Source of coefficients: https://www.newlightphotonics.com/v1/alpha-BBO-properties.html
-    """
-    wl = wavelength / 1000  # Convert nm to micrometers
-
-    if not extraordinary:
-        n_o = np.sqrt(2.67579 + 0.02099 / (wl**2 - 0.00470) - 0.00528 * wl**2)
-        return n_o
-    elif theta == 0:
-        n_e = np.sqrt(2.31197 + 0.01184 / (wl**2 - 0.01607) - 0.00400 * wl**2)
-        return n_e
-    else:
-        n_e = n_BBO(wavelength, extraordinary=True) # extraordinary index at theta=0
-        n_o = n_BBO(wavelength, extraordinary=False)
-        n_theta = np.sqrt(1 / (np.sin(theta)**2 / n_e**2 + np.cos(theta)**2 / n_o**2))
-        return n_theta
-
-def v_g_BBO(wavelength, extraordinary=False, theta=0):
-    """Calculates the group velocity of BBO for a given wavelength in nm.
-    
-    Args:
-        wavelength (float): Wavelength in nm.
-        extraordinary (bool): Whether to calculate the group velocity for the extraordinary refractive index. Defaults to False.
-        theta (float): Angle in radians to the optical axis for extraordinary index. Defaults to 0.
-        
-    Returns:
-        float: Group velocity of BBO at the given wavelength in m/s.
-    """
-    wl = wavelength / 1000  # Convert nm to micrometers
-    n = n_BBO(wavelength, extraordinary, theta)
-
-    # Calculate dn/dλ using numerical differentiation
-    delta_wl = 1e-5  # Small change in wavelength in micrometers
-    n_plus = n_BBO((wl + delta_wl) * 1000, extraordinary, theta)
-    n_minus = n_BBO((wl - delta_wl) * 1000, extraordinary, theta)
-    dn_dwl = (n_plus - n_minus) / (2 * delta_wl)
-
-    # Group index calculation
-    n_g = n - wl * dn_dwl
-
-    # Speed of light in vacuum (m/s)
-    c = const.c
-
-    # Group velocity
-    v_g = c / n_g
-
-    return v_g
-
 def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
     """
     Calculates the group velocity mismatch (GVM) between signal and idler in BBO for given parameters.
@@ -89,13 +30,12 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
         type (str): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
         
     Returns:
-        float: Group velocity mismatch in s/m.
+        tuple: GVM_is (s/m), GVM_ps (s/m), GVM_pi (s/m)
+            GVM_is: Group velocity mismatch between idler and signal, projected onto signal direction
+            GVM_ps: Group velocity mismatch between pump and signal, projected onto signal direction
+            GVM_pi: Group velocity mismatch between pump and idler, projected onto idler direction
 
-    Note: The condition that projected GVM vanishes for phase matching holds for an expansion around the wavelength, for which the 
-          wavevector mismatch vanishes (i.e. the matched wavelength). Since both group velocity and ideal signal-idler angle depend on the wavelength,
-          this condition is therefore only strictly fulfilled at the wavelength chosen for matching. 
-          If the matching conditions are sufficiently broadband, and the GVD of the material is low, the condition extends to a larger spectral region.
-          However, here, the projected GVM is calculated for each wavelength individually, with the respective ideal signal-idler angle.
+    Note: For NOPA phase matching, GVM_is should vanish for the phase matched wavelength.
     """
     # frequencies in rad/s
     w_s = 2 * np.pi * const.c / (lmd_s * 1e-9)
@@ -113,25 +53,28 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
 
     v_g_s = v_g_BBO(lmd_s, type_boolean[0], theta)
     v_g_i = v_g_BBO(lmd_i, type_boolean[1], theta)
+    v_g_p = v_g_BBO(lmd_p, type_boolean[2], theta)
 
     # compute idler-pump angle from perpendicular phase matching condition
     k_s = 2 * np.pi * n_s / (lmd_s * 1e-9)
     k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
-    beta = np.arcsin(k_s * np.sin(alpha) / k_i)
-    Omega = beta + alpha
+    beta = np.arcsin(k_s * np.sin(alpha) / k_i) # idler-pump angle
+    Omega = beta + alpha # signal-idler angle
 
     # compute projected GVM in s/m
-    GVM = 1 / v_g_s - 1 / (v_g_i * np.cos(Omega))
+    GVM_is = 1 / (v_g_i * np.cos(Omega)) - 1 / v_g_s # idler projected onto signal
+    GVM_ps = 1 / (v_g_p * np.cos(alpha)) - 1 / v_g_s # pump projected onto signal
+    GVM_pi = 1 / (v_g_p * np.cos(beta)) - 1 / v_g_i  # pump projected onto idler
 
-    return GVM
-    
+    return GVM_is, GVM_ps, GVM_pi
 
 def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
 
     """
     Computes the wavevector mismatch for NOPA phase matching, given propagation angle, signal wavelength and pump-signal angle.
-    Idler-pump angle is computed from perpendicular phase matching condition. 
+    Idler-pump angle is computed from the perpendicular phase matching condition. 
     As a consequence, the perpendicular mismatch is zero by construction.
+    Physically, this represents the fact that the idler direction is determined by the polarization response direction, which is fixed by the pump-signal angle.
     The parallel mismatch is then computed from the parallel phase matching condition, and returned (e.g. to be minimized).
     Pump wavelength can be specified, default is 400 nm (2nd harmonic of 800 nm).
 
@@ -176,6 +119,7 @@ def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
     """
     Minimizes the wavevector mismatch for NOPA phase matching, given signal wavelength and pump-signal angle.
     The propagation angle is varied to minimize the parallel wavevector mismatch.
+    Perpendicular mismatch is zero due to the idler-pump angle. See compute_k_mismatch() for details.
 
     Args:
         lmd_s (float): Signal wavelength in nm.
@@ -352,12 +296,50 @@ def effective_alpha(alpha, theta, lmd_s, lmd_p=400, type='ooe', n_external=1.0, 
 
     return alpha_eff
 
-if __name__ == "__main__":
-    # Example usage
-    alpha = np.radians(3.6)  # Pump-signal angle in radians
+def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=400, ret_ext=False):
+    """
+    Calculates the pulse front tilt angle inside the BBO crystal introduced by a prism + telescope setup, 
+    depending on the incidence angle on the telescope.
 
-    lmd_s_array = np.linspace(800, 450, 100)  # Signal wavelengths from 500 nm to 800 nm
-    theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha)
+    Args:
+        phi (float): Incidence angle on the telescope in radians. Can be a numpy array.
+        theta (float): Propagation angle in the crystal relative to crystal axis, in radians.
+        n_prism_func (float): Function that takes wavelength in nm and returns refractive index of the prism material.
+        theta_apex (float): Apex angle of the prism in radians.
+        f1 (float): Focal length of the first lens in the telescope in m.
+        f2 (float): Focal length of the second lens in the telescope in m.
+        lmd_p (float, optional): Pump wavelength in nm. Defaults to 400.
+        ret_ext (bool, optional): Whether to return the external pulse front tilt angle. Defaults to False.
+
+    Returns:
+        float: Pulse front tilt angle inside the crystal in radians.
+        If ret_ext is True, also returns the external pulse front tilt angle in radians.
+
+    """
+
+    # compute angle of refraction in the prism using Snell's law
+    n_prism = n_prism_func(lmd_p)
+    phi_r = np.arcsin(np.sin(phi) / n_prism)
+
+    # compute angle of refraction at prism exit face
+    phi_t = np.arcsin(n_prism * np.sin(theta_apex - phi_r))
+
+    # compute pulse front tilt outside the prism
+    dn_dlambda = (n_prism_func(lmd_p + 1) - n_prism_func(lmd_p - 1)) / 2  # numerical derivative, in 1/nm
+    tan_gamma_prism = - np.sin(theta_apex) / (np.cos(phi_r) * np.cos(phi_t)) * lmd_p * dn_dlambda
+
+    # compute pulse front tilt after telescope
+    tan_gamma_ext = f1 / f2 * tan_gamma_prism
+
+    # compute pulse front tilt inside the crystal
+    v_g = v_g_BBO(lmd_p, extraordinary=True, theta=theta)
+
+    tan_gamma_int = (v_g / const.c) * tan_gamma_ext
+
+    if ret_ext:
+        return np.arctan(tan_gamma_int), np.arctan(tan_gamma_ext)
+    else:
+        return np.arctan(tan_gamma_int)
 
     # Plotting the results and save to image file
     plt.figure(figsize=(10, 5))

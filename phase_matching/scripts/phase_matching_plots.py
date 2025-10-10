@@ -49,7 +49,7 @@ if __name__ == "__main__":
     plt.sca(ax1)
     theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_opt, lmd_p=lmd_p, type=type)
 
-    plt.plot(lmd_s_array, np.degrees(theta_array), label=f'α={np.degrees(alpha_opt):.2f}° (opt.)', linestyle='--')
+    plt.plot(lmd_s_array, np.degrees(theta_array), label=f'α={np.degrees(alpha_opt):.2f}° (opt.)\n$\\theta_c$={np.degrees(theta_opt):.2f}°', linestyle='--')
     plt.sca(ax2)
     plt.plot(lmd_s_array, delta_k_array * 1e-3, label=f'α={np.degrees(alpha_opt):.2f}° (opt.)', linestyle='--')
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
                  label=f'$\\Delta\\alpha$={np.degrees(alpha_opt_detuned - alpha_opt):.2f}°,' 
                        f'$\\Delta\\theta$={np.degrees(theta_opt_detuned - theta_opt):.2f}°') # Convert to mm^-1
     
-    plt.title(f'Wavevector Mismatch for α={np.degrees(alpha_opt):.2f}°, θ={np.degrees(theta_opt):.2f}°')
+    plt.title(f'Wavevector Mismatch for L={L*1e3:.1f} mm, $I_p$={I_p*1e-13:.1f} GW/cm²')
     plt.xlabel(r'$\lambda_s$ (nm)')
     plt.ylabel(r'$\Delta k$ (mm$^{-1}$)')
     plt.grid()
