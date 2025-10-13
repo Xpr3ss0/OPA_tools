@@ -262,7 +262,7 @@ def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True):
         gain_db = np.nan_to_num(gain_db, nan=0.0)
         return gain_db
     else:
-        gain = np.nan_to_num(gain, nan=0.0)
+        gain = np.nan_to_num(gain, nan=1)
         return gain
 
 def effective_alpha(alpha, theta, lmd_s, lmd_p=400, type='ooe', n_external=1.0, normal='pump'):
@@ -340,23 +340,3 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
         return np.arctan(tan_gamma_int), np.arctan(tan_gamma_ext)
     else:
         return np.arctan(tan_gamma_int)
-
-    # Plotting the results and save to image file
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.plot(lmd_s_array, np.degrees(theta_array))
-    plt.title('Optimal Propagation Angle vs Signal Wavelength')
-    plt.xlabel('Signal Wavelength (nm)')
-    plt.ylabel('Optimal Propagation Angle (degrees)')
-    #plt.xlim(22, 34)
-    plt.grid()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(lmd_s_array, delta_k_array*1e-6)  # Convert to rad/mm
-    plt.title('Wavevector Mismatch vs Signal Wavelength')
-    plt.xlabel('Signal Wavelength (nm)')
-    plt.ylabel(r'Wavevector Mismatch (rad/mm)')
-    plt.grid()
-
-    plt.tight_layout()
-    plt.savefig('phase_matching_results.png')

@@ -50,4 +50,5 @@ if __name__ == "__main__":
 
     plt.tight_layout()
 
-    plt.savefig('phase_matching/plots/pulse_front_tilt.png', dpi=300)
+    # plt.savefig('phase_matching/plots/pulse_front_tilt.png', dpi=300)
+    plt.show()

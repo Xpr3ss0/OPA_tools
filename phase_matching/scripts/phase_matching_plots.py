@@ -125,4 +125,5 @@ if __name__ == "__main__":
     
 
     plt.tight_layout()
-    plt.savefig(fname='phase_matching/plots/phase_matching_plots.png', dpi=300)
+    plt.show()
+    # plt.savefig(fname='phase_matching/plots/phase_matching_plots.png', dpi=300)

@@ -7,6 +7,7 @@ flexparser==0.4
 fonttools==4.60.1
 idna==3.10
 kiwisolver==1.4.9
+LightwaveExplorer==2025.2.4
 matplotlib==3.10.6
 MPSPlots==1.8.1
 numpy==2.3.3
