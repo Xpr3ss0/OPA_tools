@@ -9,7 +9,7 @@ from materials import n_BBO, v_g_BBO
 
 # CONVENTIONS:
 # type: 'ooe' corresponds to signal ordinary, idler ordinary, pump extraordinary. While different types are supported, 
-#   this only affects the refractive index calculations. Importently, the propagation angle theta is assumed to be the same for all three waves.
+#   this only affects the refractive index calculations. Importantly, the propagation angle theta is assumed to be the same for all three waves.
 #   This might not be the case if the indices of refraction for the generated waves very with theta, as is the case for type II phase matching. 
 # angles: alpha is pump-signal angle, theta is propagation angle relative to crystal axis
 # all angles are expected in radians
@@ -71,12 +71,11 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
 def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
 
     """
-    Computes the wavevector mismatch for NOPA phase matching, given propagation angle, signal wavelength and pump-signal angle.
-    Idler-pump angle is computed from the perpendicular phase matching condition. 
-    As a consequence, the perpendicular mismatch is zero by construction.
-    Physically, this represents the fact that the idler direction is determined by the polarization response direction, which is fixed by the pump-signal angle.
-    The parallel mismatch is then computed from the parallel phase matching condition, and returned (e.g. to be minimized).
-    Pump wavelength can be specified, default is 400 nm (2nd harmonic of 800 nm).
+    Computes the wavevector mismatch for (NOPA) phase matching, given propagation angle, signal wavelength and pump-signal (NC) angle.
+    The mismatch is computed as the difference in magnitude of the polarization response k-vector (vectorial difference k_p - k_s, DFG),
+    and the idler k_vector.
+    This represents the fact that the idler is emitted in the direction of the polarization response.
+    A positive mismatch implies k_i > k_pol.
 
     Args:
         theta (float): Propagation angle in radians.
@@ -86,7 +85,7 @@ def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
         type (str, optional): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
 
     Returns:
-        float: Parallel wavevector mismatch in 1/m. Corresponds to full wavevector mismatch, by construction.
+        float: Wavevector mismatch in 1/m. 
     """
 
     # frequencies in rad/s
@@ -107,13 +106,26 @@ def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
     k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
     k_p = 2 * np.pi * n_p / (lmd_p * 1e-9)
 
+    # compute wavevector of polarization response (idler will be emitted along that direction)
+    k_pol_par = k_p - k_s * np.cos(alpha) # parallel to k_p
+    k_pol_perp = np.sin(alpha) # perpendicular to k_p
+    k_pol = np.sqrt(k_pol_par**2 + k_pol_perp**2)
+
+    # compute mismatch
+    delta_k = k_i - k_pol
+
+    # below is the original way I calculated the mismatch...
+    # I think it's wrong, because the direction of the idler is determined by the polarization respone,
+    # which corresponds to the vectorial difference between k_p and k_s (DFG)
+
     # compute idler-pump angle from perpendicular phase matching condition
-    beta = np.arcsin(k_s * np.sin(alpha) / k_i)
+    # beta = np.arcsin(k_s * np.sin(alpha) / k_i)
 
     # compute parallel wavevector mismatch in 1/m
-    delta_k_par = k_s * np.cos(alpha) - k_p + k_i * np.cos(beta)
+    # delta_k_par = k_s * np.cos(alpha) - k_p + k_i * np.cos(beta)
+    # delta_k = delta_k_par
 
-    return delta_k_par
+    return delta_k
 
 def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
     """
