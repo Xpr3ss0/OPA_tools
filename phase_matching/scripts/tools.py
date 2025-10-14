@@ -106,26 +106,17 @@ def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
     k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
     k_p = 2 * np.pi * n_p / (lmd_p * 1e-9)
 
-    # compute wavevector of polarization response (idler will be emitted along that direction)
-    k_pol_par = k_p - k_s * np.cos(alpha) # parallel to k_p
-    k_pol_perp = np.sin(alpha) # perpendicular to k_p
-    k_pol = np.sqrt(k_pol_par**2 + k_pol_perp**2)
+    # minimize w.r.t. signal-pump angle 
+    def objective(Omega):
+        delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
+        delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(Omega)
+        delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
+        return delta_k
 
-    # compute mismatch
-    delta_k = k_i - k_pol
+    result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
 
-    # below is the original way I calculated the mismatch...
-    # I think it's wrong, because the direction of the idler is determined by the polarization respone,
-    # which corresponds to the vectorial difference between k_p and k_s (DFG)
-
-    # compute idler-pump angle from perpendicular phase matching condition
-    # beta = np.arcsin(k_s * np.sin(alpha) / k_i)
-
-    # compute parallel wavevector mismatch in 1/m
-    # delta_k_par = k_s * np.cos(alpha) - k_p + k_i * np.cos(beta)
-    # delta_k = delta_k_par
-
-    return delta_k
+    # return minimal mismatch
+    return objective(result.x)
 
 def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
     """
@@ -271,10 +262,10 @@ def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True):
     
     if dB:
         gain_db = 10 * np.log10(gain)
-        gain_db = np.nan_to_num(gain_db, nan=0.0)
+        # gain_db = np.nan_to_num(gain_db, nan=0.0)
         return gain_db
     else:
-        gain = np.nan_to_num(gain, nan=1)
+        # gain = np.nan_to_num(gain, nan=1)
         return gain
 
 def effective_alpha(alpha, theta, lmd_s, lmd_p=400, type='ooe', n_external=1.0, normal='pump'):
