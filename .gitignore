@@ -1,2 +1,3 @@
 .venv
 LWE_results
+**/__pycache__/
