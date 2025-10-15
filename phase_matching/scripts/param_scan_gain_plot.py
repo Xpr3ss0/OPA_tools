@@ -10,7 +10,7 @@ from scipy import constants as const
 # batch two is over any other parameter
 
 
-lwe_results_filename = r"C:\Users\juliu\Documents\VSCode Projects\OPA_tools\LWE_results\NOPA_NC_scan_08.txt"
+lwe_results_filename = r"C:\Users\juliu\Documents\VSCode Projects\OPA_tools\LWE_results\NOPA_NC_scan_18.txt"
 
 
 # this function builds the legend string, taking all relevant parameters from the lwe result, except the scanned one
@@ -38,13 +38,13 @@ def plot_references(pumpFreq, mode='nu'):
     
     if mode=='nu':
         plt.axvline(degenFreq*1e-12, label='degeneracy', ls='--')
-        plt.axvline(400, label='target region', color='black')
-        plt.axvline(700, color='black')
+        plt.axvline(const.c / 520e-9 * 1e-12, label='target region', color='black')
+        plt.axvline(const.c / 700e-9 * 1e-12, color='black')
     elif mode=='lmd':
         degenLmd = const.c / degenFreq
         plt.axvline(degenLmd*1e6, label='degeneracy', ls='--')
-        plt.axvline(const.c / 400e12 * 1e6, label='target region', color='black')
-        plt.axvline(const.c / 700e12 * 1e6, color='black')
+        plt.axvline(0.52, label='target region', color='black')
+        plt.axvline(0.7, color='black')
 
 
 if __name__=="__main__":
@@ -98,6 +98,7 @@ if __name__=="__main__":
     plt.ylabel(r'gain')
     plt.legend(loc='upper right')
     plt.yscale('log')
+    plt.grid()
 
     plt.sca(ax2)
     plot_references(pumpFreq, mode='nu')
@@ -105,18 +106,24 @@ if __name__=="__main__":
     plt.ylabel(r'gain')
     plt.legend(loc='upper left')
     plt.yscale('log')
+    plt.grid()
+
 
     plt.sca(ax3)
     plot_references(pumpFreq, mode='lmd')
     plt.xlabel(r'$\lambda$ ($\mathrm{\mu m}$)')
     plt.ylabel(r"S (J/THz)")
     plt.legend(loc='upper right')
+    plt.grid()
+
 
     plt.sca(ax4)
     plot_references(pumpFreq, mode='nu')
     plt.xlabel(r"$\nu$ (THz)")
     plt.ylabel(r"S (J/THz)")
     plt.legend(loc='upper left')
+    plt.grid()
+
 
     plt.tight_layout()
 

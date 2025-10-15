@@ -258,7 +258,7 @@ def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True):
     # calculate gain
     Gamma_squared = 2 * w_i * w_s * d_eff**2 * I_p / (n_i * n_s * n_p * const.c**3 * const.epsilon_0)
     g = np.sqrt(Gamma_squared - (delta_k / 2)**2)
-    gain = w_i / w_s * Gamma_squared / g**2 * np.sinh(g * L)**2
+    gain = Gamma_squared / g**2 * np.exp(2 * g * L) / 4
     
     if dB:
         gain_db = 10 * np.log10(gain)

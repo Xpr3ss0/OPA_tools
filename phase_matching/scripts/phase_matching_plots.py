@@ -3,18 +3,19 @@ import matplotlib.pyplot as plt
 from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
 
 # Parameters
-alpha_values = [0, 2.5, 5, 6] # degrees
-signal_range = (530, 770) # nm
+alpha_values = [3.9, 4.0, 4.1] # degrees
+signal_range = (500, 700) # nm
+signal_lmd_m = 550
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
-I_p = 25e13 # 25 GW/cm^2 = 25e13 W/m^2
+I_p = 50e13 # 25 GW/cm^2 = 25e13 W/m^2
 gain_in_dB = False
 type = 'ooe' # phase matching type, in principle all should be supported
 
 # fine tuning
 alpha_optimization = 'delta_k_squares' # 'theta_std' or 'delta_k_squares', chooses the metric for alpha optimization
 
-angle_detuning_array = np.array([0.0, 0.02, 0.03, 0.04]) # degrees, detunes angle from optimized value
+angle_detuning_array = np.array([-0.1, 0, 0.1]) # degrees, detunes angle from optimized value
 angle_detuning_single = 0 # degrees, single detuning value
 
 detuning_mode = 'alpha' # 'alpha' or 'theta', chooses whether to detune alpha over array.
@@ -44,7 +45,7 @@ if __name__ == "__main__":
 
     # make theta plot for optimal alpha, theta_opt and delta_k_opt correspond to center wavelength (default)
     alpha_opt, theta_opt, delta_k_opt = optimize_alpha(signal_range, bounds=(0, np.radians(5)), 
-                                                       lmd_p=lmd_p, metric=alpha_optimization, type=type)
+                                                       lmd_p=lmd_p, metric=alpha_optimization, type=type, lmd_s_center=signal_lmd_m)
 
     plt.sca(ax1)
     theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_opt, lmd_p=lmd_p, type=type)
