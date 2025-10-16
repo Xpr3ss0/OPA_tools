@@ -68,7 +68,7 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
 
     return GVM_is, GVM_ps, GVM_pi
 
-def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
+def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
 
     """
     Computes the wavevector mismatch for (NOPA) phase matching, given propagation angle, signal wavelength and pump-signal (NC) angle.
@@ -107,18 +107,23 @@ def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
     k_p = 2 * np.pi * n_p / (lmd_p * 1e-9)
 
     # minimize w.r.t. signal-pump angle 
-    def objective(Omega):
-        delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
-        delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(Omega)
-        delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
+    if alt_method:
+        Omega = np.arcsin(k_p * np.sin(alpha) / k_i)
+        delta_k = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
         return delta_k
+    else:
+        def objective(Omega):
+            delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
+            delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(Omega)
+            delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
+            return delta_k
 
-    result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
+        result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
 
-    # return minimal mismatch
-    return objective(result.x)
+        # return minimal mismatch
+        return objective(result.x)
 
-def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
+def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
     """
     Minimizes the wavevector mismatch for NOPA phase matching, given signal wavelength and pump-signal angle.
     The propagation angle is varied to minimize the parallel wavevector mismatch.
@@ -135,16 +140,16 @@ def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
 
     # Define the objective function to minimize
     def objective(theta):
-        delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type)
+        delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type, alt_method=alt_method)
         return abs(delta_k)
 
     # Minimize the objective function
     result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
 
     # Return the optimal propagation angle and the corresponding wavevector mismatch
-    return result.x, compute_k_mismatch(result.x, lmd_s, alpha, lmd_p, type)
+    return result.x, compute_k_mismatch(result.x, lmd_s, alpha, lmd_p, type, alt_method=alt_method)
 
-def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe'):
+def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe', alt_method=False):
     """
     Computes the optimal propagation angle and wavevector mismatch for an array of signal wavelengths.
     Returns two arrays: one for the optimal angles and one for the corresponding wavevector mismatches.
@@ -158,7 +163,7 @@ def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe'):
     delta_k_array = np.zeros_like(lmd_s_array)
 
     for i, lmd_s in enumerate(lmd_s_array):
-        theta_opt, delta_k_opt = minimize_k_mismatch(lmd_s, alpha, lmd_p, type)
+        theta_opt, delta_k_opt = minimize_k_mismatch(lmd_s, alpha, lmd_p, type, alt_method=alt_method)
         theta_array[i] = theta_opt
         delta_k_array[i] = delta_k_opt
 

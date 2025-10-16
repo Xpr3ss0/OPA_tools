@@ -11,7 +11,7 @@ from tools import OPA_gain
 # batch two is over any other parameter
 
 
-lwe_results_filename = r"D:\VSCode Projects\OPA_tools\LWE_results\large_theta_alpha_scan_06\large_theta_alpha_scan_06.txt"
+lwe_results_filename = r"D:\VSCode Projects\OPA_tools\LWE_results\theta_alpha_scans\large_theta_alpha_scan_05.txt"
 
 
 def band_total_power(spectrum, freqVector, band=(430, 570), log=True):

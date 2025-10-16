@@ -1,17 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
+from tools import phase_matching_array, OPA_gain, compute_k_mismatch
 
 # Parameters
-alpha_values = [3.4, 3.6, 3.7, 3.8] # degrees
-theta_value = 30.8 # degrees
-signal_range = (500, 700) # nm
+alpha_values = [0, 2.6, 3.56, 4.4] # degrees
+theta_value = 31.06 # degrees
+signal_range = (450, 740) # nm
 signal_lmd_m = 550
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
 I_p = 50e13 # 25 GW/cm^2 = 25e13 W/m^2
 gain_in_dB = False
 type = 'ooe' # phase matching type, in principle all should be supported
+alt_method = True
 
 # fine tuning
 alpha_optimization = 'delta_k_squares' # 'theta_std' or 'delta_k_squares', chooses the metric for alpha optimization
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     # make theta plots for different alpha values
     for alpha_deg in alpha_values:
         alpha_rad = np.radians(alpha_deg)
-        theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_rad, lmd_p=lmd_p, type=type)
+        theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_rad, lmd_p=lmd_p, type=type, alt_method=alt_method)
 
         plt.sca(ax1)
         plt.plot(lmd_s_array, np.degrees(theta_array), label=f'α={alpha_deg}°')
@@ -53,18 +54,18 @@ if __name__ == "__main__":
 
         plt.plot(lmd_s_array, gain_array, 
                  label=f'$\\alpha$={alpha_deg:.2f}°,' 
-                       f'$\\theta$={alpha_deg:.2f}°')
+                       f'$\\theta$={theta_value:.2f}°')
         
         plt.sca(ax4)
 
         delta_k_array_opt = np.zeros_like(lmd_s_array)
         
         for i, lmd_s in enumerate(lmd_s_array):
-            delta_k_array_opt[i] = compute_k_mismatch(np.radians(theta_value), lmd_s, np.radians(alpha_deg), lmd_p=lmd_p, type=type)
+            delta_k_array_opt[i] = compute_k_mismatch(np.radians(theta_value), lmd_s, np.radians(alpha_deg), lmd_p=lmd_p, type=type, alt_method=alt_method)
 
         plt.plot(lmd_s_array, delta_k_array_opt*1e-3, 
                  label=f'$\\alpha$={alpha_deg:.2f}°,' 
-                       f'$\\theta$={alpha_deg}°')
+                       f'$\\theta$={theta_value}°')
 
     ax1.legend()
     ax1.grid()
