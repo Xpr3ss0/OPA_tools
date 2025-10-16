@@ -39,7 +39,7 @@ def n_fused_silica(lmd):
 
     return np.sqrt(n_squared)
 
-def n_BBO(wavelength, extraordinary=False, theta=0):
+def n_BBO_Tamosauskas(wavelength, extraordinary=False, theta=0):
     """
     Calculates the refractive index of BBO for a given wavelength in nm.
     If extraordinary is True, calculates the extraordinary refractive index, at angle theta (in radians) to the optical axis.
@@ -52,21 +52,58 @@ def n_BBO(wavelength, extraordinary=False, theta=0):
         
     Returns:
         float: Refractive index of BBO at the given wavelength.
-        Source of coefficients: https://www.newlightphotonics.com/v1/alpha-BBO-properties.html
+        Source of coefficients: 
+            https://refractiveindex.info/?shelf=main&book=BaB2O4&page=Tamosauskas-o for ordinary
+            https://refractiveindex.info/?shelf=main&book=BaB2O4&page=Tamosauskas-e for extraordinary
     """
     wl = wavelength / 1000  # Convert nm to micrometers
 
     if not extraordinary:
-        n_o = np.sqrt(2.67579 + 0.02099 / (wl**2 - 0.00470) - 0.00528 * wl**2)
+        n_o = np.sqrt(1 + 0.90291 * wl**2 / (wl**2 - 0.003926) + 0.83155 * wl**2 / (wl**2 - 0.018786) + 0.76536 * wl**2 / (wl**2 - 60.01))
         return n_o
     elif theta == 0:
-        n_e = np.sqrt(2.31197 + 0.01184 / (wl**2 - 0.01607) - 0.00400 * wl**2)
+        n_e = np.sqrt(1 + 1.151075 * wl**2 / (wl**2 - 0.007142) + 0.21803 * wl**2 / (wl**2 - 0.02259) + 0.656 * wl**2 / (wl**2 - 263))
         return n_e
     else:
-        n_e = n_BBO(wavelength, extraordinary=True) # extraordinary index at theta=0
-        n_o = n_BBO(wavelength, extraordinary=False)
+        n_e = n_BBO_Tamosauskas(wavelength, extraordinary=True) # extraordinary index at theta=0
+        n_o = n_BBO_Tamosauskas(wavelength, extraordinary=False)
         n_theta = np.sqrt(1 / (np.sin(theta)**2 / n_e**2 + np.cos(theta)**2 / n_o**2))
         return n_theta
+
+def n_BBO_Zhang(wavelength, extraordinary=False, theta=0):
+    """
+    Calculates the refractive index of BBO for a given wavelength in nm.
+    If extraordinary is True, calculates the extraordinary refractive index, at angle theta (in radians) to the optical axis.
+    If extraordinary is False, calculates the ordinary refractive index.
+    
+    Args:
+        wavelength (float): Wavelength in nm.
+        extraordinary (bool): Whether to calculate the extraordinary refractive index. Defaults to False.
+        theta (float): Angle in radians to the optical axis for extraordinary index. Defaults to 0.
+        
+    Returns:
+        float: Refractive index of BBO at the given wavelength.
+        Source of coefficients: 
+            https://refractiveindex.info/?shelf=main&book=BaB2O4&page=Zhang-o for ordinary
+            https://refractiveindex.info/?shelf=main&book=BaB2O4&page=Zhang-e for extraordinary
+            These coefficients are also used in LWE.
+    """
+    wl = wavelength / 1000  # Convert nm to micrometers
+
+    if not extraordinary:
+        n_o = np.sqrt(2.7359 + 0.01878 / (wl**2 - 0.01822) - 0.01471 * wl**2 + 0.0006081 * wl**4 - 0.00006740*wl**6)
+        return n_o
+    elif theta == 0:
+        n_e = np.sqrt(2.3753 + 0.01224 / (wl**2 - 0.01667) - 0.01627 * wl**2 + 0.0005716 * wl**4 - 0.00006305 * wl**6)
+        return n_e
+    else:
+        n_e = n_BBO_Zhang(wavelength, extraordinary=True) # extraordinary index at theta=0
+        n_o = n_BBO_Zhang(wavelength, extraordinary=False)
+        n_theta = np.sqrt(1 / (np.sin(theta)**2 / n_e**2 + np.cos(theta)**2 / n_o**2))
+        return n_theta
+
+# alias for current use
+n_BBO = n_BBO_Zhang
 
 def v_g_BBO(wavelength, extraordinary=False, theta=0):
     """Calculates the group velocity of BBO for a given wavelength in nm.
