@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
 
 # Parameters
-alpha_values = [3.9, 4.0, 4.1] # degrees
-theta_value = 32.1 # degrees
+alpha_values = [3.4, 3.6, 3.7, 3.8] # degrees
+theta_value = 30.8 # degrees
 signal_range = (500, 700) # nm
 signal_lmd_m = 550
 lmd_p = 400 # nm
