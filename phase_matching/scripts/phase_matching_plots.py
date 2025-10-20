@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
 
 # Parameters
-alpha_values = [3.9, 4.0, 4.1] # degrees
+alpha_values = [2.4, 2.9, 3.2, 3.5, 4] # degrees
 signal_range = (500, 700) # nm
 signal_lmd_m = 550
 lmd_p = 400 # nm
@@ -15,10 +15,10 @@ type = 'ooe' # phase matching type, in principle all should be supported
 # fine tuning
 alpha_optimization = 'delta_k_squares' # 'theta_std' or 'delta_k_squares', chooses the metric for alpha optimization
 
-angle_detuning_array = np.array([-0.1, 0, 0.1]) # degrees, detunes angle from optimized value
+angle_detuning_array = np.array([-0.04, -0.02, 0, 0.02, 0.04]) # degrees, detunes angle from optimized value
 angle_detuning_single = 0 # degrees, single detuning value
 
-detuning_mode = 'alpha' # 'alpha' or 'theta', chooses whether to detune alpha over array.
+detuning_mode = 'alpha' # 'alpha' or 'theta', chooses which angle to tune over array.
 
 # nonlinear coefficients, not used here for now, hard-coded in OPA_gain function
 # values from https://doi.org/10.1016/S0925-3467(02)00360-9

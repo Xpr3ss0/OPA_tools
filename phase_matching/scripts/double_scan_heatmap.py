@@ -10,8 +10,10 @@ from tools import OPA_gain
 # it assumes that batch 1 is over the crystal length starting with 0
 # batch two is over any other parameter
 
+data_set = 5
 
-lwe_results_filename = r"D:\VSCode Projects\OPA_tools\LWE_results\theta_alpha_scans\large_theta_alpha_scan_05.txt"
+
+lwe_results_filename = r"D:\VSCode Projects\OPA_tools\LWE_results\theta_alpha_scans\large_theta_alpha_scan_0{}.txt".format(data_set)
 
 
 def band_total_power(spectrum, freqVector, band=(430, 570), log=True):
@@ -63,7 +65,6 @@ if __name__=="__main__":
 
     for i, param_value_2 in enumerate(param_batch_2):
         for j, param_value_1 in enumerate(param_batch_1):
-
 
             # get signal spectrum
             signal_spectrum = results.spectrum_y[i, j]
@@ -138,7 +139,6 @@ if __name__=="__main__":
         line,  = ax2.plot(xdata, selected_spectrum*1e12, label=f"$\\theta={np.degrees(param_x):.2f}$, $\\alpha={np.degrees(param_y):.2f}$")
         lines.append(line)
         ax2.legend()
-
 
     def on_click(event):
         global highlights
