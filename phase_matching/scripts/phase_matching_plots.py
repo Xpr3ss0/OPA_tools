@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
 
 # Parameters
-alpha_values = [2.4, 2.9, 3.2, 3.5, 4] # degrees
+alpha_values = [3, 3.2, 3.5, 4, 4.5, 5] # degrees
 signal_range = (500, 700) # nm
 signal_lmd_m = 550
 lmd_p = 400 # nm
