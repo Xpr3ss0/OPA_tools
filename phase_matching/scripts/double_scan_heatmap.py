@@ -12,11 +12,13 @@ from tqdm import tqdm
 # batch two is over any other parameter
 # should not load more than 4 datasets at once (loading time and plotting space)
 
-data_sets = [5, 6, 7]
-
+data_sets = [2, 5, 6, 7]
 
 lwe_results_filenames = [r"D:\VSCode Projects\OPA_tools\LWE_results\theta_alpha_scans\large_theta_alpha_scan_0{}.txt".format(data_set) for data_set in data_sets]
 
+#####################
+# Utility functions #
+#####################
 
 def band_total_power(spectrum, freqVector, band=(430, 570), log=True):
     """Computes total power in a given frequency band (THz). Returns log(power) if log=True."""
@@ -63,7 +65,9 @@ title = f'log total power (a.u.) in {band[0]:.0f}THz - {band[1]:.0f}THz'
 if __name__=="__main__":
 
 
-    # load gain from lwe simulation
+    #######################
+    # Loading LWE results #
+    #######################
     print("Loading LWE results...")
     results = [lwe.load(lwe_results_filename) for lwe_results_filename in tqdm(lwe_results_filenames)]
 
@@ -74,27 +78,41 @@ if __name__=="__main__":
     seed_bandwidths = [result.bandwidth2 for result in results]
     seed_freqs = [result.frequency2 for result in results]
     seed_energies = [result.pulseEnergy2 for result in results]
+    pump_energies = [result.pulseEnergy1 for result in results]
+    pump_focal_area = [np.pi * result.beamwaist1**2 for result in results]
+    pump_bandwidths = [result.bandwidth1 for result in results]
+    pump_FL_durations = [0.44 / bandwidth for bandwidth in pump_bandwidths] # assuming Gaussian pulses
+    pump_I_p = [energy / (duration * area) * 1e-13 for energy, duration, area in zip(pump_energies, pump_FL_durations, pump_focal_area)] # in GW/cm^2
 
+    # print loaded parameters
     for i in range(len(results)):
-        print(f"Loaded LWE results from {lwe_results_filenames[i]}\n"
+        print(f"\nLoaded LWE results from {lwe_results_filenames[i]}\n"
               f"Signal center frequency: {seed_freqs[i]*1e-12:.2f} THz\n"
-              f"Signal bandwidth: {seed_bandwidths[i]*1e-12:.2f} THz\n\n")
+              f"Signal bandwidth: {seed_bandwidths[i]*1e-12:.2f} THz\n"
+              f"Pump energy: {pump_energies[i]*1e6:.2f} uJ\n"
+              f"Pump intensity: {pump_I_p[i]:.2f} GW/cm^2\n")
 
 
-    # create heat maps
+    ######################
+    # Creating heat maps #
+    ######################
+
     heat_maps = []
     theta_cw_arrays = []
 
+    # initialize empty heat maps
     for i in range(len(results)):
         heat_map = np.zeros((len(param_batches_2[i]), len(param_batches_1[i])))
         heat_maps.append(heat_map)
 
     signal_freqs = [result.frequencyVectorSpectrum for result in results]
-    signal_lmds = [const.c / freq for freq in signal_freqs]
+    with np.errstate(divide='ignore'):
+        signal_lmds = [const.c / freq for freq in signal_freqs]
     lmd_filters = [(lmd < 3000e-9) & (lmd > 300e-9) for lmd in signal_lmds]
 
-    print("Computing heat map values...")
-    for k in range(len(results)):
+    # compute heat map values
+    print("Computing heat maps...")
+    for k in tqdm(range(len(results))):
         theta_up_list = []
         theta_down_list = []
         for i, param_value_2 in enumerate(param_batches_2[k]):
@@ -132,12 +150,16 @@ if __name__=="__main__":
         theta_cw_arrays.append((np.array(theta_up_list), np.array(theta_down_list)))
 
                 
+    ################
+    # Set up plots #
+    ################
 
-
+    # set up backend and figure
     plt.switch_backend('QT5Agg')
     fig, axs = plt.subplot_mosaic([[f'map_{i}', f'map_{i+1}' if i+1 < len(results) else f'map_{i}', 'selected_plot', 'selected_plot'] 
                                    for i in range(0, len(results), 2)])
 
+    # plot heat maps and theta_cw lines
     for i in range(len(results)):
         ax = axs[f'map_{i}']
         heatmap_plot = ax.imshow(heat_maps[i])
@@ -145,7 +167,7 @@ if __name__=="__main__":
         ax.set_yticks(np.arange(len(param_batches_2[i])), labels=[f"{np.degrees(v):.1f}°" for v in param_batches_2[i]])
         ax.set_xlabel(r'Crystal Angle $\theta$ (degrees)')
         ax.set_ylabel(r'Propagation Angle $\alpha$ (degrees)')
-        ax.set_title(title)
+        ax.set_title(title + f'\n$I_p$={pump_I_p[i]:.1f} GW/cm²')
 
         # plot theta_cw line
         xdata_up, xdata_down = theta_cw_arrays[i]
@@ -157,21 +179,22 @@ if __name__=="__main__":
         ax.plot(xdata_down[selection_down], ydata[selection_down], color='grey', linestyle='--', label=f'$\\theta_m$ @ {band[1]}THz')
         ax.legend()
 
+    # initialize plot for selected spectra
     ax2 = axs['selected_plot']
     ax2.set_title("Spectral Power Density")
     ax2.set_xlabel("$\\nu$ (THz)    (press b to toggle scale)")
     ax2.set_ylabel("Power Spectrum ( J / THz )    (press n to toggle mode)")
     ax2.set_title("Spectral Power Density")
 
+    ##################
+    # Event handlers #
+    ##################
+
     highlights = []
     lines = []
     selected_tiles = []
     x_scale = 'frequency' # 'frequency' or 'wavelength'
     y_mode = 'spectrum' # 'spectrum' or 'gain'
-
-    ##################
-    # Event handlers #
-    ##################
 
     def on_button_press(event):
 
@@ -239,6 +262,7 @@ if __name__=="__main__":
         elif event.key == "r":
             plt.tight_layout()
             plt.draw()
+    
     def add_plot(index):
 
         global highlights
