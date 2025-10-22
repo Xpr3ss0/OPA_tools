@@ -8,16 +8,99 @@ from materials import n_BBO, v_g_BBO
 # functions used for calculating phase matching
 
 # CONVENTIONS:
+
 # type: 'ooe' corresponds to signal ordinary, idler ordinary, pump extraordinary. While different types are supported, 
-#   this only affects the refractive index calculations. Importantly, the propagation angle theta is assumed to be the same for all three waves.
-#   This might not be the case if the indices of refraction for the generated waves very with theta, as is the case for type II phase matching. 
+#   this only affects the refractive index calculations. However, the crystal angle theta is assumed to be independent of the non-collinear angle alpha.
+#   This is only true if there is only one extraordinary beam (the pump), oriented at theta to the crystal axis. Then, signal and idler can be oriented at alpha relative to the pump, without impacting phase-matching.
+#   For other phase matching types, the angle of more than one beam relative to the crystal axis is relevant, which means alpha and theta are not independent. 
+
 # angles: alpha is pump-signal angle, theta is propagation angle relative to crystal axis
 # all angles are expected in radians
 # all wavelengths are expected in nm
 # everything else in SI units (m, s, W, etc.)
 # nothing has been explicitely vectorized, numpy arrays might work but not guaranteed
 
-def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
+def get_k_vectors(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
+    """
+    Get the wavevectors for the signal, idler, and pump beams.
+
+    Args:
+        lmd_s (float): Signal wavelength in nm.
+        theta (float): Propagation angle in radians, determining respective indices of refraction. Defaults to 0.
+        alpha (float): Non-collinear pump-signal angle in radians. Defaults to 0.
+        lmd_p (float): Pump wavelength in nm. Defaults to 400.
+        type (str): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
+
+    Returns:
+        tuple: k_s, k_i, k_p (wavevectors in 1/m)
+    """
+    # frequencies in rad/s
+    w_s = 2 * np.pi * const.c / (lmd_s * 1e-9)
+    w_p = 2 * np.pi * const.c / (lmd_p * 1e-9)
+    w_i = w_p - w_s
+
+    # wavelengths in nm
+    lmd_i = 2 * np.pi * const.c / w_i * 1e9
+
+    # refractive indices and group velocities (in m/s) and wavevectors (abs. magnitude, in 1/m)
+    type_boolean = [type[i] == 'e' for i in range(3)]
+    n_s = n_BBO(lmd_s, type_boolean[0], theta)
+    n_i = n_BBO(lmd_i, type_boolean[1], theta)
+    n_p = n_BBO(lmd_p, type_boolean[2], theta)
+
+    k_s = 2 * np.pi * n_s / (lmd_s * 1e-9)
+    k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
+    k_p = 2 * np.pi * n_p / (lmd_p * 1e-9)
+
+    return k_s, k_i, k_p
+
+def get_idler_angle(k_s, k_i, k_p, alpha, return_delta_k=False, method='analytical'):
+    """
+    Compute the idler angle. Can use two methods. Result should be the same.
+
+    Args:
+        k_s (float): Signal wavevector in 1/m.
+        k_i (float): Idler wavevector in 1/m.
+        k_p (float): Pump wavevector in 1/m.
+        alpha (float): Pump-signal angle in radians.
+        return_delta_k (bool): If True, also return the wavevector mismatch delta_k. Defaults to False.
+        method (str): 'analytical' or 'numerical' method to compute the angles. Defaults to 'analytical'.
+
+    Returns:
+        tuple: omega (idler-signal angle in radians), beta (idler-pump angle in radians), delta_k (wavevector mismatch in 1/m, if return_delta_k is True)
+    """
+
+    if method == 'analytical':
+        def objective(Omega):
+            delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
+            delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(Omega)
+            delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
+            return delta_k
+
+        result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
+        omega = result.x
+        beta = result.x - alpha
+        delta_k = objective(result.x)
+    elif method == 'numerical':
+        # compute vector (k_p - k_s) components (pump is along x-axis)
+        p_minus_s_x = k_p - k_s * np.cos(alpha)
+        p_minus_s_y = - k_s * np.sin(alpha)
+
+        # angle between pump (x-axis) and (k_p - k_s): use arctan2(|y|, x)
+        # take absolute value of y because beta is defined as a positive angle magnitude
+        beta = np.arctan2(np.abs(p_minus_s_y), p_minus_s_x)
+        omega = beta + alpha
+
+        if return_delta_k:
+            delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(omega)
+            delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(omega)
+            delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
+
+    if return_delta_k:
+        return omega, beta, delta_k
+    return omega, beta
+
+def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe', project=False):
     """
     Calculates the group velocity mismatch (GVM) between signal and idler in BBO for given parameters.
     GVM is defined as the difference in inverse group velocities (1/v_g) of signal and idler.
@@ -28,45 +111,46 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe'):
         alpha (float): Pump-signal angle in radians. If non-zero, the projected GVM (idler projected onto signal) is computed. Defaults to 0.
         lmd_p (float): Pump wavelength in nm. Defaults to 400.
         type (str): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
+        project (bool or str): If false, no projection is done and GVM is computed in terms of absolute group velocities. 
+                               If set to 'signal' or 'pump', the GVM is projected onto the signal or pump direction, respectively. Defaults to False.
+                               Projection makes sense if the beam waist is large compared to the pulse length, as in this case the walk-off occurs mainly orthogonal to the pulse front (which should be tilted in this case).
+                               The projection should then match the direction of the pulse front tilt (i.e. signal for a tilted pump).
         
     Returns:
-        tuple: GVM_is (s/m), GVM_ps (s/m), GVM_pi (s/m)
-            GVM_is: Group velocity mismatch between idler and signal, projected onto signal direction
+        tuple: GVM_ps (s/m), GVM_pi (s/m), GVM_si (s/m)
             GVM_ps: Group velocity mismatch between pump and signal, projected onto signal direction
-            GVM_pi: Group velocity mismatch between pump and idler, projected onto idler direction
-
-    Note: For NOPA phase matching, GVM_is should vanish for the phase matched wavelength.
+            GVM_pi: Group velocity mismatch between pump and idler, projected onto signal direction
+            GVM_si: Group velocity mismatch between signal and idler, projected onto signal direction
     """
-    # frequencies in rad/s
-    w_s = 2 * np.pi * const.c / (lmd_s * 1e-9)
-    w_p = 2 * np.pi * const.c / (lmd_p * 1e-9)
-    w_i = w_p - w_s
+    k_s, k_i, k_p = get_k_vectors(lmd_s, theta, alpha, lmd_p, type)
+    lmd_i = 2 * np.pi / k_i * 1e9
 
-    # wavelengths in nm
-    lmd_i = 2 * np.pi * const.c / w_i * 1e9
+    v_g_s = v_g_BBO(lmd_s, type[0]=='e', theta)
+    v_g_i = v_g_BBO(lmd_i, type[1]=='e', theta)
+    v_g_p = v_g_BBO(lmd_p, type[2]=='e', theta)
 
-    # refractive indices and group velocities (in m/s)
-    type_boolean = [type[i] == 'e' for i in range(3)]
-    n_s = n_BBO(lmd_s, type_boolean[0], theta)
-    n_i = n_BBO(lmd_i, type_boolean[1], theta)
-    n_p = n_BBO(lmd_p, type_boolean[2], theta)
-
-    v_g_s = v_g_BBO(lmd_s, type_boolean[0], theta)
-    v_g_i = v_g_BBO(lmd_i, type_boolean[1], theta)
-    v_g_p = v_g_BBO(lmd_p, type_boolean[2], theta)
-
-    # compute idler-pump angle from perpendicular phase matching condition
-    k_s = 2 * np.pi * n_s / (lmd_s * 1e-9)
-    k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
-    beta = np.arcsin(k_s * np.sin(alpha) / k_i) # idler-pump angle
-    Omega = beta + alpha # signal-idler angle
+    # find beta (idler-pump angle) that minimizes wavevector mismatch
+    omega, beta, delta_k = get_idler_angle(k_s, k_i, k_p, alpha, return_delta_k=True)
 
     # compute projected GVM in s/m
-    GVM_is = 1 / (v_g_i * np.cos(Omega)) - 1 / v_g_s # idler projected onto signal
-    GVM_ps = 1 / (v_g_p * np.cos(alpha)) - 1 / v_g_s # pump projected onto signal
-    GVM_pi = 1 / (v_g_p * np.cos(beta)) - 1 / v_g_i  # pump projected onto idler
+    if project == 'signal':
+        d_p = 1 / (v_g_p * np.cos(alpha))
+        d_s = 1 / v_g_s
+        d_i = 1 / (v_g_i * np.cos(omega))
+    elif project == 'pump':
+        d_p = 1 / v_g_p
+        d_s = 1 / (v_g_s * np.cos(alpha))
+        d_i = 1 / (v_g_i * np.cos(beta))
+    else:
+        d_p = 1 / v_g_p
+        d_s = 1 / v_g_s
+        d_i = 1 / v_g_i
 
-    return GVM_is, GVM_ps, GVM_pi
+    GVM_ps = d_p - d_s
+    GVM_pi = d_p - d_i
+    GVM_si = d_s - d_i
+
+    return GVM_ps, GVM_pi, GVM_si, delta_k
 
 def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
 
