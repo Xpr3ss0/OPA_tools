@@ -152,7 +152,7 @@ def group_velocity_mismatch(lmd_s, theta=0, alpha=0, lmd_p=400, type='ooe', proj
 
     return GVM_ps, GVM_pi, GVM_si, delta_k
 
-def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
+def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe', method="analytical"):
 
     """
     Computes the wavevector mismatch for (NOPA) phase matching, given propagation angle, signal wavelength and pump-signal (NC) angle.
@@ -167,47 +167,47 @@ def compute_k_mismatch(theta, lmd_s, alpha, lmd_p=400, type='ooe', alt_method=Fa
         alpha (float): Pump-signal angle in radians.
         lmd_p (float, optional): Pump wavelength in nm. Defaults to 400.
         type (str, optional): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
+        method (str, optional): Method to compute idler angle ('analytical' or 'numerical'). Defaults to 'analytical'. As both methods should give the same result, there is no reason for numerical at the moment.
 
     Returns:
         float: Wavevector mismatch in 1/m. 
     """
 
     # frequencies in rad/s
-    w_s = 2 * np.pi * const.c / (lmd_s * 1e-9)
-    w_p = 2 * np.pi * const.c / (lmd_p * 1e-9)
-    w_i = w_p - w_s
+    k_s, k_i, k_p = get_k_vectors(lmd_s, theta, alpha, lmd_p, type)
 
-    # wavelengths in nm
-    lmd_i = 2 * np.pi * const.c / w_i * 1e9
+    omega, beta, delta_k = get_idler_angle(k_s, k_i, k_p, alpha, return_delta_k=True, method=method)
 
-    # refractive indices, wavevectors (abs. magnitude, in 1/m) and group velocities (in m/s)
-    type_boolean = [type[i] == 'e' for i in range(3)]
-    n_s = n_BBO(lmd_s, type_boolean[0], theta)
-    n_i = n_BBO(lmd_i, type_boolean[1], theta)
-    n_p = n_BBO(lmd_p, type_boolean[2], theta)
+    return delta_k
 
-    k_s = 2 * np.pi * n_s / (lmd_s * 1e-9)
-    k_i = 2 * np.pi * n_i / (lmd_i * 1e-9)
-    k_p = 2 * np.pi * n_p / (lmd_p * 1e-9)
+def compute_k_mismatch_dumb(theta, lmd_s, alpha, lmd_p=400, type='ooe'):
 
-    # minimize w.r.t. signal-pump angle 
-    if alt_method:
-        Omega = np.arcsin(k_p * np.sin(alpha) / k_i)
-        delta_k = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
-        return delta_k
-    else:
-        def objective(Omega):
-            delta_k_par = k_p * np.cos(alpha) - k_s - k_i * np.cos(Omega)
-            delta_k_perp = k_p * np.sin(alpha) - k_i * np.sin(Omega)
-            delta_k = np.sqrt(delta_k_par**2 + delta_k_perp**2)
-            return delta_k
+    """
+    Like compute_k_mismatch(), but computes the wavevector mismatch in a more "dumb" way, by assuming parallel mismatch is zero and computing 
+    only the perpendicular component. The angle is computed from the assumption of parallel phase matching.
 
-        result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
+    Args:
+        theta (float): Propagation angle in radians.
+        lmd_s (float): Signal wavelength in nm.
+        alpha (float): Pump-signal angle in radians.
+        lmd_p (float, optional): Pump wavelength in nm. Defaults to 400.
+        type (str, optional): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
+        method (str, optional): Method to compute idler angle ('analytical' or 'numerical'). Defaults to 'analytical'. As both methods should give the same result, there is no reason for numerical at the moment.
 
-        # return minimal mismatch
-        return objective(result.x)
+    Returns:
+        float: Wavevector mismatch in 1/m. 
+    """
 
-def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
+    # frequencies in rad/s
+    k_s, k_i, k_p = get_k_vectors(lmd_s, theta, alpha, lmd_p, type)
+
+    beta = np.arcsin( k_s * np.sin(alpha) / k_i ) # from k_p = k_s cos(alpha) + k_i cos(beta), assuming parallel mismatch is zero
+
+    delta_k = k_p -k_s * np.cos(alpha) - k_i * np.cos(beta)
+
+    return delta_k
+
+def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe'):
     """
     Minimizes the wavevector mismatch for NOPA phase matching, given signal wavelength and pump-signal angle.
     The propagation angle is varied to minimize the parallel wavevector mismatch.
@@ -224,16 +224,16 @@ def minimize_k_mismatch(lmd_s, alpha, lmd_p=400, type='ooe', alt_method=False):
 
     # Define the objective function to minimize
     def objective(theta):
-        delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type, alt_method=alt_method)
+        delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type)
         return abs(delta_k)
 
     # Minimize the objective function
     result = minimize_scalar(objective, bounds=(0, np.pi / 2), method='bounded')
 
     # Return the optimal propagation angle and the corresponding wavevector mismatch
-    return result.x, compute_k_mismatch(result.x, lmd_s, alpha, lmd_p, type, alt_method=alt_method)
+    return result.x, compute_k_mismatch(result.x, lmd_s, alpha, lmd_p, type)
 
-def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe', alt_method=False):
+def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe'):
     """
     Computes the optimal propagation angle and wavevector mismatch for an array of signal wavelengths.
     Returns two arrays: one for the optimal angles and one for the corresponding wavevector mismatches.
@@ -247,7 +247,7 @@ def phase_matching_array(lmd_s_array, alpha, lmd_p=400, type='ooe', alt_method=F
     delta_k_array = np.zeros_like(lmd_s_array)
 
     for i, lmd_s in enumerate(lmd_s_array):
-        theta_opt, delta_k_opt = minimize_k_mismatch(lmd_s, alpha, lmd_p, type, alt_method=alt_method)
+        theta_opt, delta_k_opt = minimize_k_mismatch(lmd_s, alpha, lmd_p, type)
         theta_array[i] = theta_opt
         delta_k_array[i] = delta_k_opt
 
@@ -301,7 +301,7 @@ def optimize_alpha(lmd_s_range, lmd_s_center=None, lmd_p=400, type='ooe', bounds
 
     return optimal_alpha, theta_m, delta_k_m
 
-def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True):
+def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True, dumb=False):
     """
     Calculates the OPA gain for given parameters.
     
@@ -318,7 +318,10 @@ def OPA_gain(theta, lmd_s, alpha, I_p, L, lmd_p=400, type='ooe', dB=True):
         float: OPA gain (in dB).
     """
     # Compute wavevector mismatch
-    delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type)
+    if dumb:
+        delta_k = compute_k_mismatch_dumb(theta, lmd_s, alpha, lmd_p, type)
+    else:
+        delta_k = compute_k_mismatch(theta, lmd_s, alpha, lmd_p, type)
 
     # compute frequencies in rad/s
     w_p, w_s = [2 * np.pi * const.c / (lmd * 1e-9) for lmd in (lmd_p, lmd_s)]

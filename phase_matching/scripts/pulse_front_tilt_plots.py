@@ -7,12 +7,12 @@ from materials import n_CaF2, n_fused_silica
 # script for plotting pulse front tilt angle and required incidence angle on prism
 
 # Parameters obtained from phase matching
-alpha_degree = 3.93  # Pump-signal angle in degrees
-theta = np.radians(30.42) # critical phase matching angle in radians
+alpha_degree = 3.7  # Pump-signal angle in degrees
+theta = np.radians(31.2) # critical phase matching angle in radians
 
 # Prism parameters
 theta_apex = np.radians(60) # apex angle of the prism in radians
-lmd_p = 395 # pump wavelength in nm
+lmd_p = 400 # pump wavelength in nm
 f1_telescope = 120e-3 # focal length of first telescope lens in m
 f2_telescope = 50e-3 # focal length of second telescope lens in m
 

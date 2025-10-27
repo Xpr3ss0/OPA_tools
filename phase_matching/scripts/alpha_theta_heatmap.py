@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 data_sets = [2, 5]
 
-lwe_results_filenames = [r"C:\Users\juliu\Documents\VSCode Projects\OPA_tools\LWE_results\large_theta_alpha_scan_0{}.txt".format(data_set) for data_set in data_sets]
+lwe_results_filenames = [r"D:\VSCode Projects\OPA_tools\LWE_results\theta_alpha_scans\large_theta_alpha_scan_0{}.txt".format(data_set) for data_set in data_sets]
 
 #####################
 # Utility functions #

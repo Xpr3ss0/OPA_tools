@@ -1,18 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tools import phase_matching_array, OPA_gain, compute_k_mismatch
+from matplotlib import rcParams
+
+rcParams["axes.formatter.limits"] = (-3, 3)
 
 # Parameters
-alpha_values = [0, 2.6, 3.56, 4.4] # degrees
-theta_value = 31.06 # degrees
+alpha_values = [3.4] # degrees
+theta_value = 30.5 # degrees
 signal_range = (450, 740) # nm
-signal_lmd_m = 550
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
-I_p = 50e13 # 25 GW/cm^2 = 25e13 W/m^2
+I_p = 60e13 # 25 GW/cm^2 = 25e13 W/m^2
 gain_in_dB = False
 type = 'ooe' # phase matching type, in principle all should be supported
-alt_method = True
 
 # fine tuning
 alpha_optimization = 'delta_k_squares' # 'theta_std' or 'delta_k_squares', chooses the metric for alpha optimization
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     # make theta plots for different alpha values
     for alpha_deg in alpha_values:
         alpha_rad = np.radians(alpha_deg)
-        theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_rad, lmd_p=lmd_p, type=type, alt_method=alt_method)
+        theta_array, delta_k_array = phase_matching_array(lmd_s_array, alpha_rad, lmd_p=lmd_p, type=type)
 
         plt.sca(ax1)
         plt.plot(lmd_s_array, np.degrees(theta_array), label=f'α={alpha_deg}°')
@@ -61,7 +62,7 @@ if __name__ == "__main__":
         delta_k_array_opt = np.zeros_like(lmd_s_array)
         
         for i, lmd_s in enumerate(lmd_s_array):
-            delta_k_array_opt[i] = compute_k_mismatch(np.radians(theta_value), lmd_s, np.radians(alpha_deg), lmd_p=lmd_p, type=type, alt_method=alt_method)
+            delta_k_array_opt[i] = compute_k_mismatch(np.radians(theta_value), lmd_s, np.radians(alpha_deg), lmd_p=lmd_p, type=type)
 
         plt.plot(lmd_s_array, delta_k_array_opt*1e-3, 
                  label=f'$\\alpha$={alpha_deg:.2f}°,' 

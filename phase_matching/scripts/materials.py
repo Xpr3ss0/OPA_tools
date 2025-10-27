@@ -103,7 +103,7 @@ def n_BBO_Zhang(wavelength, extraordinary=False, theta=0):
         return n_theta
 
 # alias for current use
-n_BBO = n_BBO_Zhang
+n_BBO = n_BBO_Tamosauskas
 
 def v_g_BBO(wavelength, extraordinary=False, theta=0):
     """Calculates the group velocity of BBO for a given wavelength in nm.
