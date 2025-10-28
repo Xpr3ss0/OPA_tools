@@ -6,9 +6,9 @@ from scipy.optimize import minimize_scalar
 
 
 # Parameters
-theta_apex = np.radians(60) # apex angle of the prism in radians
+theta_apex = np.radians(40) # apex angle of the prism in radians
 lmd_p = 800 # pump wavelength in nm
-f1_telescope = 200e-3 # focal length of first telescope lens in m
+f1_telescope = 300e-3 # focal length of first telescope lens in m
 f2_telescope = 30e-3 # focal length of second telescope lens in m
 alpha_target = np.radians(3.7)  # target pulse front tilt angle in radians
 theta = np.radians(31.2) # critical phase matching angle in radians
@@ -50,17 +50,22 @@ if __name__ == "__main__":
         alpha_tilt = pulse_front_tilt_angle(phi, theta, n_CaF2, theta_apex, f1_telescope, f2_telescope, lmd_p=800, full_return=False)
         return np.abs(alpha_tilt - alpha_target)
     
+    
+
     result = minimize_scalar(objective, bounds=(0, np.pi/2), method='bounded')
     phi_opt = result.x
+    
     result_tilt = pulse_front_tilt_angle(phi_opt, theta, n_CaF2, theta_apex, f1_telescope, f2_telescope, lmd_p=800, full_return=True)
+
+    for key, value in result_tilt.items():
+        print(f"{key}: {np.degrees(value):.2f}")
 
     tilt_internal_deg = np.degrees(result_tilt["internal tilt"])
     
     # compute angle between incidence and exit beam
     prism_incidence = result_tilt["prism incidence angle"] # incidence angle normal to prism surface
     prism_exit = result_tilt["prism exit angle"] # exit angle normal to prism surface
-    angle_change = np.pi + theta_apex - prism_incidence - prism_exit
-    angle_tilt = np.pi/2 - theta_apex / 2 - prism_exit 
+    angle_tilt = - theta_apex / 2 + prism_exit
 
     # plot geometry
     plt.figure(figsize=(8, 6))
@@ -76,7 +81,7 @@ if __name__ == "__main__":
     plt.plot([B[0], C[0]], [B[1], C[1]], 'k-')
 
     # plot outgoing beam (horizontal at y=0)
-    beam_length = 1.5
+    beam_length = 1
     mat = get_rotation_matrix(angle_tilt)
 
     # exit beam points
@@ -87,18 +92,36 @@ if __name__ == "__main__":
     b0 = 0.3 * base_length # prism horizontal half-width at entry face
 
     # define coefficients for quadratic equation
-    gamma = theta_apex/2 - result_tilt["prism refraction angle 2"] # angle between prism base and beam inside prism
-    a = np.sin(gamma)**2
-    b = -2 * b0 * np.cos(gamma) * np.sin(theta_apex/2)
-    c = - b0**2
-    l0 = (-b + np.sqrt(b**2 - 4*a*c)) / (2*a) # length of beam inside prism
-    print(l0)
-    P3 = P1 + l0 * np.array([-np.cos(gamma + angle_tilt), -np.sin(gamma + angle_tilt)])
+    gamma = prism_exit - result_tilt["prism refraction angle 2"] # angle between prism base and beam inside prism
+
+    # getting length of beam inside prism numerically because I'm too dumb to do it analytically
+    def objective(l):
+
+        def objective_2(s):
+            P3 = P1 + l * np.array([-np.cos(gamma), -np.sin(gamma)])
+            P_closest = A + s * (C - A)
+            return np.linalg.norm(P3 - P_closest)
+        
+        res = minimize_scalar(objective_2, bounds=(0, 1), method='bounded')
+        s_opt = res.x
+        P3 = P1 + l * np.array([-np.cos(gamma), -np.sin(gamma)])
+        P_closest = A + s_opt * (C - A)
+        return np.linalg.norm(P3 - P_closest)
+    
+    res = minimize_scalar(objective, bounds=(0.1, 2.0), method='bounded')
+    l_opt = res.x
+    P3 = P1 + l_opt * np.array([-np.cos(gamma), -np.sin(gamma)])
+
+    beta = phi_opt - result_tilt["prism refraction angle 1"]
+    angle_change = gamma + beta
+
+    P4 = P3 + beam_length * np.array([-np.cos(angle_change), -np.sin(angle_change)])
 
 
-
+    plt.scatter([A[0]], [A[1]], color='r')
     plt.plot([P1[0], P2[0]], [P1[1], P2[1]], 'b-')
     plt.plot([P3[0], P1[0]], [P3[1], P1[1]], 'b-')
+    plt.plot([P4[0], P3[0]], [P4[1], P3[1]], 'b-')
 
     # plot incoming beam (at pi - angle_change to horizontal)
     incoming_angle = np.pi - angle_change
