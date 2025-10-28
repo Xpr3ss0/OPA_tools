@@ -391,7 +391,7 @@ def effective_alpha(alpha, theta, lmd_s, lmd_p=400, type='ooe', n_external=1.0, 
 
     return alpha_eff
 
-def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=400, ret_ext=False):
+def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=400, full_return=True):
     """
     Calculates the pulse front tilt angle inside the BBO crystal introduced by a prism + telescope setup, 
     depending on the incidence angle on the telescope.
@@ -407,17 +407,21 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
         ret_ext (bool, optional): Whether to return the external pulse front tilt angle. Defaults to False.
 
     Returns:
-        float: Pulse front tilt angle inside the crystal in radians.
-        If ret_ext is True, also returns the external pulse front tilt angle in radians.
+        float or dict: If full_return is False, returns the pulse front tilt angle inside the crystal in radians.
+                       If full_return is True, returns a dictionary with internal tilt, external tilt, tilt after prism (before telescope), 
+                       prism exit angle, prism internal refraction angle, and prism incidence angle.
 
     """
 
-    # compute angle of refraction in the prism using Snell's law
+    # compute angle of refraction after first surface in the prism using Snell's law
     n_prism = n_prism_func(lmd_p)
     phi_r = np.arcsin(np.sin(phi) / n_prism)
 
+    # compute angle of incidence at prism exit face
+    phi_i = theta_apex - phi_r
+
     # compute angle of refraction at prism exit face
-    phi_t = np.arcsin(n_prism * np.sin(theta_apex - phi_r))
+    phi_t = np.arcsin(n_prism * np.sin(phi_i))
 
     # compute pulse front tilt outside the prism
     dn_dlambda = (n_prism_func(lmd_p + 1) - n_prism_func(lmd_p - 1)) / 2  # numerical derivative, in 1/nm
@@ -431,7 +435,15 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
 
     tan_gamma_int = (v_g / const.c) * tan_gamma_ext
 
-    if ret_ext:
-        return np.arctan(tan_gamma_int), np.arctan(tan_gamma_ext)
-    else:
+    if not full_return:
         return np.arctan(tan_gamma_int)
+    else:
+        result = {"internal tilt": np.arctan(tan_gamma_int),
+                  "external tilt": np.arctan(tan_gamma_ext),
+                  "prism tilt": np.arctan(tan_gamma_prism),
+                  "prism exit angle": phi_t,
+                  "prism refraction angle 1": phi_r,
+                  "prism refraction angle 2": phi_i,
+                  "prism incidence angle": phi}
+        
+        return result

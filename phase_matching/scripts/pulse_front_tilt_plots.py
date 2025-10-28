@@ -12,9 +12,9 @@ theta = np.radians(31.2) # critical phase matching angle in radians
 
 # Prism parameters
 theta_apex = np.radians(60) # apex angle of the prism in radians
-lmd_p = 400 # pump wavelength in nm
-f1_telescope = 120e-3 # focal length of first telescope lens in m
-f2_telescope = 50e-3 # focal length of second telescope lens in m
+lmd_p = 800 # pump wavelength in nm
+f1_telescope = 200e-3 # focal length of first telescope lens in m
+f2_telescope = 30e-3 # focal length of second telescope lens in m
 
 # plot parameters
 phi_range = (0, np.pi/2)
@@ -32,9 +32,12 @@ if __name__ == "__main__":
     for theta_apex in apex_angles:
         for n_func, material in [(n_CaF2, 'CaF₂ (GVD: 68 fs²/mm)'), (n_fused_silica, 'Fused Silica (GVD: 98 fs²/mm)')]:
 
-            gamma_int_array, gamma_ext_array = pulse_front_tilt_angle(phi_array, theta, n_func, 
+            result = pulse_front_tilt_angle(phi_array, theta, n_func, 
                                                                       theta_apex, f1_telescope, f2_telescope,
-                                                                      ret_ext=True, lmd_p=lmd_p)
+                                                                      lmd_p=lmd_p, full_return=True)
+
+            gamma_int_array, gamma_ext_array = result["internal tilt"], result["external tilt"]
+
             plt.subplot(len(apex_angles), 2, n)
             plt.plot(np.degrees(phi_array), np.degrees(gamma_int_array), label='Inside BBO')
             plt.plot(np.degrees(phi_array), np.degrees(gamma_ext_array), label='Outside BBO')
