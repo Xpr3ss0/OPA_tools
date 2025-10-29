@@ -6,7 +6,7 @@ from scipy.optimize import minimize_scalar
 
 
 # Parameters
-theta_apex = np.radians(40) # apex angle of the prism in radians
+theta_apex = np.radians(60) # apex angle of the prism in radians
 lmd_p = 800 # pump wavelength in nm
 f1_telescope = 300e-3 # focal length of first telescope lens in m
 f2_telescope = 30e-3 # focal length of second telescope lens in m
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     b0 = 0.3 * base_length # prism horizontal half-width at entry face
 
     # define coefficients for quadratic equation
-    gamma = prism_exit - result_tilt["prism refraction angle 2"] # angle between prism base and beam inside prism
+    gamma = prism_exit - result_tilt["prism refraction angle 2"] # angle between beam in prism and beam exiting prism
 
     # getting length of beam inside prism numerically because I'm too dumb to do it analytically
     def objective(l):

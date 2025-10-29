@@ -8,7 +8,7 @@ signal_range = (500, 700) # nm
 signal_lmd_m = 550
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
-I_p = 120e13 # 25 GW/cm^2 = 25e13 W/m^2
+I_p = 50e13 # 25 GW/cm^2 = 25e13 W/m^2
 gain_in_dB = False
 type = 'ooe' # phase matching type, in principle all should be supported
 

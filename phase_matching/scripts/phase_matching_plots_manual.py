@@ -6,9 +6,9 @@ from matplotlib import rcParams
 rcParams["axes.formatter.limits"] = (-3, 3)
 
 # Parameters
-alpha_values = [3.4] # degrees
-theta_value = 30.5 # degrees
-signal_range = (450, 740) # nm
+alpha_values = [3.7] # degrees
+theta_value = 31.26 # degrees
+signal_range = (500, 700) # nm
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
 I_p = 60e13 # 25 GW/cm^2 = 25e13 W/m^2

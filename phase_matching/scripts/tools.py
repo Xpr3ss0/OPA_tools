@@ -408,9 +408,17 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
 
     Returns:
         float or dict: If full_return is False, returns the pulse front tilt angle inside the crystal in radians.
-                       If full_return is True, returns a dictionary with internal tilt, external tilt, tilt after prism (before telescope), 
-                       prism exit angle, prism internal refraction angle, and prism incidence angle.
-
+                       If full_return is True, returns a dictionary with the following keys:
+                           'internal tilt': pulse front tilt angle inside the crystal in radians,
+                            'external tilt': pulse front tilt angle before the crystal (after telescope) in radians,
+                            'prism tilt': pulse front tilt angle introduced by the prism (before telescope) in radians,
+                            'prism exit angle': angle of the beam exiting the prism in radians,
+                            'prism refraction angle 1': angle of refraction (to surface normal) at the first prism surface in radians,
+                            'prism refraction angle 2': angle of refraction (to surface normal) at the second prism surface in radians,
+                            'prism incidence angle': angle of incidence (to surface normal) at the first prism surface in radians (argument phi),
+                            'angle change 1': angle change at the first prism surface in radians,
+                            'angle change 2': angle change at the second prism surface in radians,
+                            'total angle change': total angle change through the prism in radians
     """
 
     # compute angle of refraction after first surface in the prism using Snell's law
@@ -438,12 +446,20 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
     if not full_return:
         return np.arctan(tan_gamma_int)
     else:
+
+        angle_change_2 = phi_t - phi_i  # angle change at prism exit face
+        angle_change_1 = phi - phi_r  # angle change at prism entry face
+        angle_change = angle_change_1 + angle_change_2 # total angle change through prism
+
         result = {"internal tilt": np.arctan(tan_gamma_int),
                   "external tilt": np.arctan(tan_gamma_ext),
                   "prism tilt": np.arctan(tan_gamma_prism),
                   "prism exit angle": phi_t,
                   "prism refraction angle 1": phi_r,
                   "prism refraction angle 2": phi_i,
-                  "prism incidence angle": phi}
+                  "prism incidence angle": phi,
+                  "angle change 1": angle_change_1,
+                  "angle change 2": angle_change_2,
+                  "total angle change": angle_change}
         
         return result
