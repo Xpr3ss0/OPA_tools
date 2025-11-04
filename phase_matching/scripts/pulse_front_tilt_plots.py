@@ -13,12 +13,12 @@ theta = np.radians(31.2) # critical phase matching angle in radians
 # Prism parameters
 theta_apex = np.radians(60) # apex angle of the prism in radians
 lmd_p = 800 # pump wavelength in nm
-f1_telescope = 300e-3 # focal length of first telescope lens in m
-f2_telescope = 30e-3 # focal length of second telescope lens in m
+f1_telescope = 200e-3 # focal length of first telescope lens in m
+f2_telescope = 50e-3 # focal length of second telescope lens in m
 
 # plot parameters
 phi_range = (0, np.pi/2)
-apex_angles = [60, 45, 40] # apex angles to consider, degrees
+apex_angles = [60, 45] # apex angles to consider, degrees
 
 
 if __name__ == "__main__":

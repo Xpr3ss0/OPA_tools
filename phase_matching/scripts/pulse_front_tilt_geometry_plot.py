@@ -6,10 +6,10 @@ from scipy.optimize import minimize_scalar
 
 
 # Parameters
-theta_apex = np.radians(60) # apex angle of the prism in radians
+theta_apex = np.radians(45) # apex angle of the prism in radians
 lmd_p = 800 # pump wavelength in nm
-f1_telescope = 300e-3 # focal length of first telescope lens in m
-f2_telescope = 30e-3 # focal length of second telescope lens in m
+f1_telescope = 200e-3 # focal length of first telescope lens in m
+f2_telescope = 50e-3 # focal length of second telescope lens in m
 alpha_target = np.radians(3.7)  # target pulse front tilt angle in radians
 theta = np.radians(31.2) # critical phase matching angle in radians
 def get_rotation_matrix(angle):
