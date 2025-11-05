@@ -1,17 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tools import pulse_front_tilt_angle
-from materials import n_CaF2
+from materials import n_CaF2, n_fused_silica
 from scipy.optimize import minimize_scalar
 
 
 # Parameters
 theta_apex = np.radians(45) # apex angle of the prism in radians
-lmd_p = 800 # pump wavelength in nm
-f1_telescope = 200e-3 # focal length of first telescope lens in m
+lmd_p_prism = 790/2 # pump wavelength in nm, do PFM before SHG
+lmd_p_BBO = 790/2 # pump wavelength in nm in BBO
+f1_telescope = 140e-3 # focal length of first telescope lens in m
 f2_telescope = 50e-3 # focal length of second telescope lens in m
 alpha_target = np.radians(3.7)  # target pulse front tilt angle in radians
 theta = np.radians(31.2) # critical phase matching angle in radians
+n_func = n_fused_silica
+
+
 def get_rotation_matrix(angle):
     """
     Returns a 2D rotation matrix for a given angle in radians.
@@ -47,15 +51,15 @@ if __name__ == "__main__":
 
     # find required incidence angle
     def objective(phi):
-        alpha_tilt = pulse_front_tilt_angle(phi, theta, n_CaF2, theta_apex, f1_telescope, f2_telescope, lmd_p=800, full_return=False)
+        alpha_tilt = pulse_front_tilt_angle(phi, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=False)
         return np.abs(alpha_tilt - alpha_target)
     
     
 
     result = minimize_scalar(objective, bounds=(0, np.pi/2), method='bounded')
     phi_opt = result.x
-    
-    result_tilt = pulse_front_tilt_angle(phi_opt, theta, n_CaF2, theta_apex, f1_telescope, f2_telescope, lmd_p=800, full_return=True)
+
+    result_tilt = pulse_front_tilt_angle(phi_opt, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=True)
 
     for key, value in result_tilt.items():
         print(f"{key}: {np.degrees(value):.2f}")

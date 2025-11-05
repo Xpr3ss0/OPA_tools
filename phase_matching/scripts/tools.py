@@ -391,7 +391,7 @@ def effective_alpha(alpha, theta, lmd_s, lmd_p=400, type='ooe', n_external=1.0, 
 
     return alpha_eff
 
-def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=400, full_return=True):
+def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p_prism=800, lmd_p_crystal=400, full_return=True):
     """
     Calculates the pulse front tilt angle inside the BBO crystal introduced by a prism + telescope setup, 
     depending on the incidence angle on the telescope.
@@ -403,7 +403,8 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
         theta_apex (float): Apex angle of the prism in radians.
         f1 (float): Focal length of the first lens in the telescope in m.
         f2 (float): Focal length of the second lens in the telescope in m.
-        lmd_p (float, optional): Pump wavelength in nm. Defaults to 400.
+        lmd_p_prism (float, optional): Pump wavelength in nm. Defaults to 800.
+        lmd_p_crystal (float, optional): Pump wavelength in nm. Defaults to 400.
         ret_ext (bool, optional): Whether to return the external pulse front tilt angle. Defaults to False.
 
     Returns:
@@ -422,7 +423,7 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
     """
 
     # compute angle of refraction after first surface in the prism using Snell's law
-    n_prism = n_prism_func(lmd_p)
+    n_prism = n_prism_func(lmd_p_prism)
     phi_r = np.arcsin(np.sin(phi) / n_prism)
 
     # compute angle of incidence at prism exit face
@@ -432,14 +433,14 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p=4
     phi_t = np.arcsin(n_prism * np.sin(phi_i))
 
     # compute pulse front tilt outside the prism
-    dn_dlambda = (n_prism_func(lmd_p + 1) - n_prism_func(lmd_p - 1)) / 2  # numerical derivative, in 1/nm
-    tan_gamma_prism = - np.sin(theta_apex) / (np.cos(phi_r) * np.cos(phi_t)) * lmd_p * dn_dlambda
+    dn_dlambda = (n_prism_func(lmd_p_prism + 1) - n_prism_func(lmd_p_prism - 1)) / 2  # numerical derivative, in 1/nm
+    tan_gamma_prism = - np.sin(theta_apex) / (np.cos(phi_r) * np.cos(phi_t)) * lmd_p_prism * dn_dlambda
 
     # compute pulse front tilt after telescope
     tan_gamma_ext = f1 / f2 * tan_gamma_prism
 
     # compute pulse front tilt inside the crystal
-    v_g = v_g_BBO(lmd_p, extraordinary=True, theta=theta)
+    v_g = v_g_BBO(lmd_p_crystal, extraordinary=True, theta=theta)
 
     tan_gamma_int = (v_g / const.c) * tan_gamma_ext
 

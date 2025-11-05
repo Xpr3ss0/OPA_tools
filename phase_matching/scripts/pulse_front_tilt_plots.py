@@ -11,9 +11,9 @@ alpha_degree = 3.7  # Pump-signal angle in degrees
 theta = np.radians(31.2) # critical phase matching angle in radians
 
 # Prism parameters
-theta_apex = np.radians(60) # apex angle of the prism in radians
-lmd_p = 800 # pump wavelength in nm
-f1_telescope = 200e-3 # focal length of first telescope lens in m
+lmd_p_prism = 790/2 # pump wavelength in nm, do PFM before SHG
+lmd_p_BBO = 790/2 # pump wavelength in nm in BBO
+f1_telescope = 140e-3 # focal length of first telescope lens in m
 f2_telescope = 50e-3 # focal length of second telescope lens in m
 
 # plot parameters
@@ -37,14 +37,14 @@ if __name__ == "__main__":
 
             result = pulse_front_tilt_angle(phi_array, theta, n_func, 
                                                                       theta_apex, f1_telescope, f2_telescope,
-                                                                      lmd_p=lmd_p, full_return=True)
+                                                                      lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=True)
             
             def objective(phi):
-                alpha_tilt = pulse_front_tilt_angle(phi, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p=800, full_return=False)
+                alpha_tilt = pulse_front_tilt_angle(phi, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=False)
                 return np.abs(alpha_tilt - np.radians(alpha_degree))
             
             
-            result_opt = minimize_scalar(objective, bounds=(0.05, np.pi/3), method='bounded')
+            result_opt = minimize_scalar(objective, bounds=(0.045, np.pi/3), method='bounded')
             phi_opt = result_opt.x
 
             gamma_int_array, gamma_ext_array = result["internal tilt"], result["external tilt"]

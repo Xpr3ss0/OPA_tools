@@ -7,10 +7,10 @@ from scipy import constants as const
 # Define parameters for two pulses
 
 lmd_p = 400  # nm
-lmd_s = 700  # nm
+lmd_s = 650  # nm
 theta = np.radians(31) # angle to optical axis for extraordinary index
 alpha = np.radians(3.7)  # propagation angle relative to z-axis
-tilt_angle_p = 0
+tilt_angle_p = alpha
 tilt_angle_s = alpha
 
 v_g_p = v_g_BBO(lmd_p, extraordinary=True, theta=theta) # m/s
@@ -25,8 +25,8 @@ sigma_z_p = v_g_p * tau_p
 sigma_z_s = v_g_s * tau_s
 
 # pulse widths in x
-sigma_x_p = 5e-3  # in m
-sigma_x_s = 5e-3  # in m
+sigma_x_p = 0.1e-3  # in m
+sigma_x_s = 0.1e-3  # in m
 
 # print parameters
 c = const.c
@@ -87,6 +87,12 @@ if __name__ == "__main__":
     pulse_prod_tmid = pulse_1(0.0) * pulse_2(0.0)
     pulse_prod_tend = pulse_1(t[-1]) * pulse_2(t[-1])
 
+    # compute filters for all three pulse products/sums corresponding to 4*sigma in x and z
+
+    x_lims = np.where(np.abs(x)<4*max(sigma_x_p, sigma_x_s))[0][[0, -1]]
+    z_lims_t = [np.where(np.abs(z - np.mean([v_g_p, v_g_s])*t[i])<10*max(sigma_z_p, sigma_z_s))[0][[0, -1]] for i in [0, len(t)//2, -1]]
+
+
     # plot overlap values and fwhm
     fig, axs = plt.subplots(nrows=3, figsize=(6, 10))
     axs[0].plot(z_positions_p*1e3, overlap_values)
@@ -107,15 +113,15 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     # plot pulse sums
-    fig, (axs_sums, axs_prods) = plt.subplots(2, 3, figsize=(8, 8), sharex=True, sharey=True)
-    im1 = axs_sums[0].imshow(pulse_sum_tstart, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest')
+    fig, (axs_sums, axs_prods) = plt.subplots(2, 3, figsize=(12, 8), sharex=True, sharey='col')
+    im1 = axs_sums[0].imshow(pulse_sum_tstart, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest', aspect='auto')
     axs_sums[0].set_title(f"t={t[0]*1e12:.2f} ps\n")
-    im2 = axs_sums[1].imshow(pulse_sum_tmid, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest')
+    im2 = axs_sums[1].imshow(pulse_sum_tmid, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest', aspect='auto')
     axs_sums[1].set_title(f"t=0 ps\nSum of Amplitudes")
-    im3 = axs_sums[2].imshow(pulse_sum_tend, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest')
+    im3 = axs_sums[2].imshow(pulse_sum_tend, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='viridis', interpolation='nearest', aspect='auto')
     axs_sums[2].set_title(f"t={t[-1]*1e12:.2f} ps\n")
 
-    plt.suptitle(f"$\\alpha={np.degrees(alpha):.1f}$, $\\theta={np.degrees(theta):.1f}$ deg")
+    plt.suptitle(f"$\\alpha={np.degrees(alpha):.1f}$, $\\theta={np.degrees(theta):.1f}$ deg, $\\tau_p={tau_p*1e15:.0f}$ fs, $\\tau_s={tau_s*1e15:.0f}$ fs, $\\sigma_p={sigma_x_p*1e3:.1f}$ mm, $\\sigma_s={sigma_x_s*1e3:.1f}$ mm")
 
     for ax in axs_sums:
         ax.set_xlabel("x (mm)")
@@ -125,9 +131,9 @@ if __name__ == "__main__":
     # plot pulse products, using the same color scale for comparison, using log scale
     pmax = max(pulse_prod_tstart.max(), pulse_prod_tmid.max(), pulse_prod_tend.max())
     pmin = min(pulse_prod_tstart[pulse_prod_tstart>0].min(), pulse_prod_tmid[pulse_prod_tmid>0].min(), pulse_prod_tend[pulse_prod_tend>0].min())
-    im4 = axs_prods[0].imshow(pulse_prod_tstart, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest')
-    im5 = axs_prods[1].imshow(pulse_prod_tmid, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest')
-    im6 = axs_prods[2].imshow(pulse_prod_tend, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest')
+    im4 = axs_prods[0].imshow(pulse_prod_tstart, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest', aspect='auto')
+    im5 = axs_prods[1].imshow(pulse_prod_tmid, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest', aspect='auto')
+    im6 = axs_prods[2].imshow(pulse_prod_tend, extent=(x_range[0]*1e3, x_range[1]*1e3, z_range[0]*1e3, z_range[1]*1e3), origin='lower', cmap='plasma', vmin=pmin, vmax=pmax, interpolation='nearest', aspect='auto')
 
     axs_prods[1].set_title(f"Product of Amplitudes")
 
