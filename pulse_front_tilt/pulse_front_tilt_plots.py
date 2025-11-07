@@ -18,7 +18,7 @@ f2_telescope = 50e-3 # focal length of second telescope lens in m
 
 # plot parameters
 phi_range = (0, np.pi/2)
-apex_angles = [65, 70, 75, 80, 82] # apex angles to consider, degrees
+apex_angles = [40, 43, 46, 49] # apex angles to consider, degrees
 
 
 if __name__ == "__main__":

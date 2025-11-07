@@ -57,8 +57,12 @@ def get_phi_opt(theta_apex):
     alpha_test_array = pulse_front_tilt_angle(phi_test_array, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=False)
 
     # phi_min: minimum incidence angle where alpha is valid (not NaN or infinite)
-    phi_min = phi_test_array[np.where(np.isfinite(alpha_test_array))[0][0]]
-    result_opt = minimize_scalar(objective, bounds=(phi_min, np.pi/2), method='bounded')
+    phi_valid = phi_test_array[np.isfinite(alpha_test_array)]
+
+    # phi_min = phi_test_array[np.where(np.isfinite(alpha_test_array))[0][0]]
+    phi_min = phi_valid.min()
+    phi_max = phi_valid.max()
+    result_opt = minimize_scalar(objective, bounds=(phi_min, phi_max), method='bounded')
     return result_opt.x
 
 if __name__ == "__main__":

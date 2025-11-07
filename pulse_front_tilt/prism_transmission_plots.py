@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from tools import pulse_front_tilt_angle
 from materials import n_CaF2, n_fused_silica
+from tqdm import tqdm
 
 # script for plotting pulse front tilt angle and required incidence angle on prism
 
@@ -17,7 +18,7 @@ f1_telescope = 200e-3 # focal length of first telescope lens in m
 f2_telescope = 50e-3 # focal length of second telescope lens in m
 material = 'CaF2'  # 'CaF2' or 'FS'
 pol_vector = np.array([0, 1])  # example polarization vector, pol[0]: s-polarization, pol[1]: p-polarization
-apex_range = (np.radians(45), np.radians(83))  # apex angle range to consider in radians
+apex_range = (np.radians(30), np.radians(90))  # apex angle range to consider in radians
 
 
 
@@ -55,8 +56,15 @@ def get_phi_opt(theta_apex):
     alpha_test_array = pulse_front_tilt_angle(phi_test_array, theta, n_func, theta_apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=False)
 
     # phi_min: minimum incidence angle where alpha is valid (not NaN or infinite)
-    phi_min = phi_test_array[np.where(np.isfinite(alpha_test_array))[0][0]]
-    result_opt = minimize_scalar(objective, bounds=(phi_min, np.pi/2), method='bounded')
+    phi_valid = phi_test_array[np.isfinite(alpha_test_array)]
+
+    if len(phi_valid) == 0:
+        return None
+
+    # phi_min = phi_test_array[np.where(np.isfinite(alpha_test_array))[0][0]]
+    phi_min = phi_valid.min()
+    phi_max = phi_valid.max()
+    result_opt = minimize_scalar(objective, bounds=(phi_min, phi_max), method='bounded')
     return result_opt.x
 
 if __name__ == "__main__":
@@ -69,9 +77,15 @@ if __name__ == "__main__":
     theta_i_2_array = np.zeros_like(apex_array)
 
     # Optimize apex angle for maximum transmission
-    for i, apex in enumerate(apex_array):
+    for i, apex in tqdm(enumerate(apex_array), total=len(apex_array)):
 
         phi_opt = get_phi_opt(apex)
+        if phi_opt is None:
+            transmission_array[i] = np.nan
+            theta_i_1_array[i] = np.nan
+            theta_i_2_array[i] = np.nan
+            continue
+
         result = pulse_front_tilt_angle(phi_opt, theta, n_func, apex, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=True)
 
         theta_i_1 = phi_opt
@@ -84,6 +98,14 @@ if __name__ == "__main__":
         transmission_array[i] = T_total
         theta_i_1_array[i] = theta_i_1
         theta_i_2_array[i] = theta_i_2
+
+    # filter out NaN values
+    valid_indices = np.isfinite(transmission_array) & (transmission_array > 0)
+    print(valid_indices)
+    apex_array = apex_array[valid_indices]
+    transmission_array = transmission_array[valid_indices]
+    theta_i_1_array = theta_i_1_array[valid_indices]
+    theta_i_2_array = theta_i_2_array[valid_indices]
 
     fig, ax = plt.subplots()
     ax2 = ax.twinx()
