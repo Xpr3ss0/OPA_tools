@@ -12,11 +12,9 @@ pyparsing==3.2.5
 PyQt5==5.15.11
 PyQt5-Qt5==5.15.2
 PyQt5_sip==12.17.1
-PySide6_Addons==6.10.0
-PySide6_Essentials==6.10.0
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3
+refractiveindex==0.0.7
 scipy==1.16.2
-shiboken6==6.10.0
 six==1.17.0
 tqdm==4.67.1

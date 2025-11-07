@@ -263,6 +263,10 @@ def optimize_alpha(lmd_s_range, lmd_s_center=None, lmd_p=400, type='ooe', bounds
         lmd_s_center (float, optional): Center signal wavelength in nm. If None, uses the midpoint of lmd_s_range. Defaults to None.
         lmd_p (float, optional): Pump wavelength in nm. Defaults to 400.
         type (str, optional): Type of phase matching ('ooe' or 'eoo'). Defaults to 'ooe'.
+        bounds (tuple, optional): Bounds for the pump-signal angle optimization in radians. Defaults to (0, pi/2).
+        metric (str, optional): Metric to minimize ('theta_std' or 'delta_k_squares'). Defaults to 'theta_std'.
+            - 'theta_std': minimizes the standard deviation of critical angle over the signal wavelength range. lmd_s_center is not used.
+            - 'delta_k_squares': minimizes the sum of squares of wavevector mismatch over the signal wavelength range, with phase matching at center wavelength (lmd_s_center).
 
     Returns:
         tuple: Optimal pump-signal angle (in radians), corresponding propagation angle (in radians), 
@@ -415,7 +419,7 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p_p
                             'prism tilt': pulse front tilt angle introduced by the prism (before telescope) in radians,
                             'prism exit angle': angle of the beam exiting the prism in radians,
                             'prism refraction angle 1': angle of refraction (to surface normal) at the first prism surface in radians,
-                            'prism refraction angle 2': angle of refraction (to surface normal) at the second prism surface in radians,
+                            'prism refraction angle 2': angle of refraction (to surface normal) at the second prism surface in radians, or equivalent angle of incidence at second prism surface,
                             'prism incidence angle': angle of incidence (to surface normal) at the first prism surface in radians (argument phi),
                             'angle change 1': angle change at the first prism surface in radians,
                             'angle change 2': angle change at the second prism surface in radians,

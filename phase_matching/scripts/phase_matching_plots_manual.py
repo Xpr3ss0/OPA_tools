@@ -6,25 +6,18 @@ from matplotlib import rcParams
 rcParams["axes.formatter.limits"] = (-3, 3)
 
 # Parameters
-alpha_values = [3.7] # degrees
-theta_value = 31.26 # degrees
-signal_range = (500, 700) # nm
+alpha_values = [0] # degrees
+theta_value = 29.21 # degrees
+signal_range = (700, 900) # nmd
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
 I_p = 60e13 # 25 GW/cm^2 = 25e13 W/m^2
 gain_in_dB = False
 type = 'ooe' # phase matching type, in principle all should be supported
 
-# fine tuning
-alpha_optimization = 'delta_k_squares' # 'theta_std' or 'delta_k_squares', chooses the metric for alpha optimization
-
-angle_detuning_array = np.array([-0.1, 0, 0.1]) # degrees, detunes angle from optimized value
-angle_detuning_single = 0 # degrees, single detuning value
-
-detuning_mode = 'alpha' # 'alpha' or 'theta', chooses whether to detune alpha over array.
-
 # nonlinear coefficients, not used here for now, hard-coded in OPA_gain function
 # values from https://doi.org/10.1016/S0925-3467(02)00360-9
+
 d22 = 2.11e-12 # m/V
 d31 = 0.26e-12 # m/V
 

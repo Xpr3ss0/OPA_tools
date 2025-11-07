@@ -2,10 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tools import phase_matching_array, optimize_alpha, OPA_gain, compute_k_mismatch
 
+
+"""
+OPA PHASE MATCHING PLOTS WITH ALPHA OPTIMIZATION
+
+    - Plots optimal propagation angle and wavevector mismatch vs signal wavelength for different pump-signal angles (alpha).
+    - Optimizes pump-signal angle (alpha) to minimize wavevector mismatch or angle variation
+    - Plots parametric gain and wavevector mismatch for optimized alpha and phase matching angle at center wavelength, with detuning options.
+    - Can also be used for general three-wave mixing phase matching analysis, but variable naming conventions follow OPA terminology.
+    - For three-wave mixing, consider that pump = wave 3, signal = wave 1, idler = wave 2, where wave 2 = wave 3 - wave 1.
+    - E.g. for SHG, wave 2 = wave 1, wave 3 = 2*wave 1. So, contrary to variable naming, wave 3 is the generated wave rather than the pump.
+
+"""
+
 # Parameters
-alpha_values = [0, 2.6, 3.6, 4.6] # degrees
+alpha_values = [0, 2, 4,6] # degrees
 signal_range = (500, 700) # nm
-signal_lmd_m = 550
+signal_lmd_m = 550 # used for alpha optimization, if delta_k_squares metric is chosen (minimizes sum of delta_k^2 over signal range, with phase matching at this wavelength)
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
 I_p = 50e13 # 25 GW/cm^2 = 25e13 W/m^2
