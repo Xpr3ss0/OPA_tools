@@ -12,9 +12,9 @@ from tqdm import tqdm
 # batch two is over any other parameter
 # should not load more than 4 datasets at once (loading time and plotting space)
 
-data_sets = [1]
+data_sets = [1, 2]
 
-lwe_results_filenames = [r"C:\Users\juliu\Documents\VSCode Projects\OPA_tools\LWE_results\delay_gdd_scan_0{}.txt".format(data_set) for data_set in data_sets]
+lwe_results_filenames = [r"C:\Users\juliu\Documents\VSCode Projects\OPA_tools\LWE_results\delay_GDD_scans\delay_GDD_scan_0{}.txt".format(data_set) for data_set in data_sets]
 
 #####################
 # Utility functions #
