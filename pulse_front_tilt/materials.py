@@ -1,6 +1,22 @@
 import numpy as np
 from scipy import constants as const
+from refractiveindex import RefractiveIndexMaterial
 
+# collect needed materials
+def n_SF11(lmd):
+    """
+    Refractive index of SF11, from Schott catalog
+    Valid for 0.365 to 2.5 um at 20°C
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 3.127487 - 0.0009890957*lmd**(-2) + 0.01363913*lmd**(-4) - 0.001588824*lmd**(-6) + 9.646333e-05*lmd**(-8)
+    return np.sqrt(n_squared)
 
 def n_CaF2(lmd):
     """
