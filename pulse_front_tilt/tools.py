@@ -63,6 +63,7 @@ def PFT_prism_sym(theta_apex, n_prism_func, lmd=800):
 
     return np.arctan(tan_gamma_prism)
 
+
 def PFT_prism_sym_test(theta_apex, n_prism_func, lmd=800):
     """
     Calculates the pulse front tilt angle introduced by a prism surrounded by air, given the apex angle and refractive index function.
