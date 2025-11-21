@@ -1,4 +1,4 @@
-from tools import PFT_change_interface, PFT_prism_sym, PFT_prism_sym_test, PFT_prism_sym_test2
+from tools import PFT_change_interface, PFT_prism_sym, PFT_prism_sym_test, PFT_prism_sym_test2, prism_pair_angles
 from materials import n_BBO, n_CaF2, n_fused_silica, n_SF11
 import numpy as np
 from tqdm import tqdm
@@ -12,9 +12,10 @@ from scipy.optimize import minimize_scalar
 
 theta_1_range_deg = (10, 60)                            # apex angle of first prism in degrees
 lmd = 400                                               # wavelength in nm
+bandwidth = 10                                         # bandwidth in nm
 n1_func = n_SF11                                        # refractive index function of first prism
 n2_func = n_fused_silica                                # refractive index function of second prism
-theta_1_test_vals = [np.radians(v) for v in [6, 10, 14, 18]]                 # test apex angle of first prism in radians
+theta_1_test_vals = [np.radians(v) for v in [6, 10, 13.1700, 14, 18]]                 # test apex angle of first prism in radians
 detuning_range = (-5, 5)
 
 ##########
@@ -35,12 +36,18 @@ PFT_1_array = np.zeros_like(theta_1_array)
 PFT_2_array = np.zeros_like(theta_1_array)
 PFT_total_array = np.zeros_like(theta_1_array)
 PFT_total_simple_array = np.zeros_like(theta_1_array)
+
+# arrays for specified theta values
 theta_2_test_vals = []
 theta_1_test_arrays = []
 diff_test_arrays = []
 delta_phi_i1_arrays = []
 delta_phi_e2_arrays = []
 PFT_detune_arrays = []
+
+# arrays for computing angular dispersion
+lmd_array = np.linspace(lmd - bandwidth/2, lmd + bandwidth/2, 200)
+total_angle_change_arrays = []
 
 
 def angle_detuning(delta_phi_i1, theta_1, theta_2, n1, n2):
@@ -180,7 +187,20 @@ for theta_1, theta_2 in zip(theta_1_test_vals, theta_2_test_vals):
     delta_phi_e2_arrays.append(delta_phi_e2_array)
     PFT_detune_arrays.append(PFT_detuning(delta_phi_i1_array, theta_1, theta_2, n1_func, n2_func, lmd))
 
+# compute angular dispersion for selected theta_1 values
+for theta_1, theta_2 in zip(theta_1_test_vals, theta_2_test_vals):
+    total_angle_change_array = np.zeros_like(lmd_array)
 
+    # compute incident angle for symmetric configuration at central wavelength
+    phi_i1 = np.arcsin(n1_func(lmd) * np.sin(theta_1 /2))
+
+    for j, lmd_var in enumerate(lmd_array):
+        n1_var = n1_func(lmd_var)
+        n2_var = n2_func(lmd_var)
+        result = prism_pair_angles(phi_i1, theta_1, theta_2, n1_var, n2_var)
+        total_angle_change_array[j] = result['delta_phi_total']
+
+    total_angle_change_arrays.append(total_angle_change_array)
 
 # plot results
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(figsize=(12, 9), nrows=2, ncols=2)
@@ -245,5 +265,28 @@ ax_inspect.set_ylabel('Angle deviation (deg)')
 ax_inspect.legend()
 ax_inspect.grid()
 plt.tight_layout()
+
+# plot angular dispersion
+fig_disp, ax_disp = plt.subplots(figsize=(6, 4))
+for total_angle_change_array, theta_1, theta_2 in zip(total_angle_change_arrays, theta_1_test_vals, theta_2_test_vals):
+    ax_disp.plot(lmd_array, np.degrees(total_angle_change_array), label=f'$\\theta_1$={np.degrees(theta_1):.1f}$\\degree$, $\\theta_2$={np.degrees(theta_2):.1f}$\\degree$')
+
+ax_disp.set_xlabel('Wavelength (nm)')
+ax_disp.set_ylabel('Total angle change (deg)')
+ax_disp.legend()
+ax_disp.grid()
+plt.tight_layout()
+
+
+# print angles for ordered prism pair
+theta_1 = np.radians(13.1700)
+theta_2 = np.radians(23.3522)
+phi_i1 = np.arcsin(n1 * np.sin(theta_1 /2)) # incident angle for symmetric configuration
+result = prism_pair_angles(phi_i1, theta_1, theta_2, n1, n2)
+
+
+print(f"\n\nPrism pair angles for {np.degrees(theta_1):.4f} deg, {np.degrees(theta_2):.4f} deg:\n")
+for key, value in result.items():
+    print(f"{key}: {np.degrees(value):.6f} degrees")
 
 plt.show()

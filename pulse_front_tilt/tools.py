@@ -132,7 +132,6 @@ def PFT_telescope(gamma_in, f1=None, f2=None, M=None):
     return np.arctan(tan_gamma_out)
 
 
-
 def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p_prism=800, lmd_p_crystal=400, full_return=True):
     """
     Calculates the pulse front tilt angle inside the BBO crystal introduced by a prism + telescope setup, 
@@ -206,3 +205,68 @@ def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p_p
                   "total angle change": angle_change}
         
         return result
+    
+
+def prism_pair_angles(phi_i1, theta_1, theta_2, n1, n2):
+    """
+    Compute all angles in a prism pair setup given the incident angle on the first prism and the apex angles of both prisms.
+    
+    Args:
+        phi_i1 (float): Incident angle on the first prism (to surface normal) in radians.
+        theta_1 (float): Apex angle of the first prism in radians.
+        theta_2 (float): Apex angle of the second prism in radians.
+        n1 (float): Refractive index of the first prism.
+        n2 (float): Refractive index of the second prism.
+
+    Returns:
+        dict: A dictionary containing all relevant angles in the prism pair setup.
+
+        keys:
+            'phi_i1': incidence angle on first prism in radians,
+            'phi_r1': angle of refraction inside first prism in radians,
+            'phi_e1': exit angle from first prism in radians,
+            'phi_i2': incidence angle on second prism in radians,
+            'phi_r2': angle of refraction inside second prism in radians,
+            'phi_e2': exit angle from second prism in radians,
+            'delta_phi_1': net angle change after first prism in radians,
+            'delta_phi_2': net angle change after second prism in radians,
+            'delta_phi_total': total net angle change in radians
+    """
+
+    # angle of refraction inside prism
+    phi_r1 = np.arcsin(np.sin(phi_i1) / n1)
+
+    # exit angle from first prism
+    phi_e1 = np.arcsin(n1 * np.sin(theta_1 - phi_r1))
+
+    # incidence angle on second prism (parallel bases, inverted)
+    phi_i2 = phi_e1 + (theta_2 - theta_1) / 2
+
+    # angle of refraction inside second prism
+    phi_r2 = np.arcsin(np.sin(phi_i2) / n2)
+
+    # exit angle from second prism
+    phi_e2 = np.arcsin(n2 * np.sin(theta_2 - phi_r2))
+
+    # net angle change after first prism
+    delta_phi_1 = phi_i1 + phi_e1 - theta_1
+
+    # net angle change after second prism
+    delta_phi_2 = phi_i2 + phi_e2 - theta_2
+
+    # total angle change (prisms are inverted, so subtract)
+    delta_phi_total = delta_phi_1 - delta_phi_2
+
+    result = {
+        "phi_i1": phi_i1,
+        "phi_r1": phi_r1,
+        "phi_e1": phi_e1,
+        "phi_i2": phi_i2,
+        "phi_r2": phi_r2,
+        "phi_e2": phi_e2,
+        "delta_phi_1": delta_phi_1,
+        "delta_phi_2": delta_phi_2,
+        "delta_phi_total": delta_phi_total
+    }
+
+    return result
