@@ -108,6 +108,7 @@ def PFT_prism_sym_test2(theta_apex, n_prism_func, lmd=800):
     tanPFT = term1 * 2 * lmd * dn_dlambda
     return np.arctan(tanPFT)
 
+
 def PFT_telescope(gamma_in, f1=None, f2=None, M=None):
     """
     Calculates the pulse front tilt angle after a telescope.
@@ -257,6 +258,9 @@ def prism_pair_angles(phi_i1, theta_1, theta_2, n1, n2):
     # total angle change (prisms are inverted, so subtract)
     delta_phi_total = delta_phi_1 - delta_phi_2
 
+    # angle of incident beam to prism base
+    angle_base = phi_i1 - theta_1/2
+
     result = {
         "phi_i1": phi_i1,
         "phi_r1": phi_r1,
@@ -266,7 +270,8 @@ def prism_pair_angles(phi_i1, theta_1, theta_2, n1, n2):
         "phi_e2": phi_e2,
         "delta_phi_1": delta_phi_1,
         "delta_phi_2": delta_phi_2,
-        "delta_phi_total": delta_phi_total
+        "delta_phi_total": delta_phi_total,
+        "angle_base": angle_base
     }
 
     return result
