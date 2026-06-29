@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from tools import pulse_front_tilt_angle
-from materials import n_CaF2, n_fused_silica
+from materials import n_CaF2, n_FS
 
 # script for plotting pulse front tilt angle and required incidence angle on prism
 
@@ -19,14 +19,15 @@ material = 'FS'  # 'CaF2' or 'FS'
 pol_vector = np.array([0, 1])  # example polarization vector, pol[0]: s-polarization, pol[1]: p-polarization
 
 theta_apex_fixed = np.radians(45)  # fixed apex angle for plotting in radians
-phi_i_fixed = np.radians(2.71)  # fixed incidence angle for plotting in radians
+phi_i1_fixed = np.radians(2.71)  # fixed incidence angle for plotting in radians
 phi_i2_fixed = np.radians(43.11)  # fixed incidence angle at second surface for plotting in radians
+optimize_phi = True  # whether to optimize incidence angle for given apex angle or use fixed value
 
 
 # n_funcs
 materials_n_funcs = {
     'CaF2': n_CaF2,
-    'FS': n_fused_silica
+    'FS': n_FS
 }
 
 
@@ -98,13 +99,22 @@ if __name__ == "__main__":
     print(f'Optimal apex angle for maximum transmission: {np.degrees(theta_apex_opt):.2f} degrees')
     print(f'Transmission: {T_max:.4f}')
     print(f'Prism Incidence angle φ: {np.degrees(phi_opt):.2f} degrees')
-    print(f'Incidence and second surface: {np.degrees(result_tilt["prism refraction angle 2"]):.2f} degrees\n')
+    print(f'Incidence at second surface: {np.degrees(result_tilt["prism refraction angle 2"]):.2f} degrees\n')
 
+    if optimize_phi:
+        phi_opt = get_phi_opt(theta_apex_fixed)
 
-    R1, R2 = fresnel_reflectance(1.0, n_func(lmd_p_prism), phi_i_fixed, pol_vector=pol_vector), fresnel_reflectance(n_func(lmd_p_prism), 1.0, phi_i2_fixed, pol_vector=pol_vector)
+        result = pulse_front_tilt_angle(phi_opt, theta, n_func, theta_apex_fixed, f1_telescope, f2_telescope, lmd_p_prism=lmd_p_prism, lmd_p_crystal=lmd_p_BBO, full_return=True)
+
+        phi_i1_fixed = phi_opt
+        phi_i2_fixed = result['prism refraction angle 2']
+    
+    R1 = fresnel_reflectance(1.0, n_func(lmd_p_prism), phi_i1_fixed, pol_vector)
+    R2 = fresnel_reflectance(n_func(lmd_p_prism), 1.0, phi_i2_fixed, pol_vector) # assume no change in polarization (approximately fine if transmission is high)
+    
     T_fixed = (1 - R1) * (1 - R2)
     print("\n\n--- Comparison to Fixed Parameters ---\n")
-    print(f'Optimal apex angle: {np.degrees(theta_apex_fixed):.2f} degrees')
+    print(f'Fixed apex angle: {np.degrees(theta_apex_fixed):.2f} degrees')
     print(f'Transmission: {T_fixed:.4f}')
-    print(f'Prism Incidence angle φ: {np.degrees(phi_i_fixed):.2f} degrees')
+    print(f'Prism Incidence angle φ: {np.degrees(phi_i1_fixed):.2f} degrees')
     print(f'Incidence at second surface: {np.degrees(phi_i2_fixed):.2f} degrees\n')

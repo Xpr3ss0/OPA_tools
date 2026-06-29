@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from tools import pulse_front_tilt_angle
-from materials import n_CaF2, n_fused_silica
+from materials import n_CaF2, n_FS
 
 # script for plotting pulse front tilt angle and required incidence angle on prism
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         
 
-        for n_func, material in [(n_CaF2, 'CaF₂ (GVD: 68 fs²/mm)'), (n_fused_silica, 'Fused Silica (GVD: 98 fs²/mm)')]:
+        for n_func, material in [(n_CaF2, 'CaF₂ (GVD: 68 fs²/mm)'), (n_FS, 'Fused Silica (GVD: 98 fs²/mm)')]:
 
             result = pulse_front_tilt_angle(phi_array, theta, n_func, 
                                                                       theta_apex, f1_telescope, f2_telescope,

@@ -18,6 +18,22 @@ def n_SF11(lmd):
     n_squared = 3.127487 - 0.0009890957*lmd**(-2) + 0.01363913*lmd**(-4) - 0.001588824*lmd**(-6) + 9.646333e-05*lmd**(-8)
     return np.sqrt(n_squared)
 
+def n_SF10(lmd):
+    """
+    Refractive index of SF10, from Schott catalog
+    Valid for 0.365 to 2.5 um at 20°C
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1.62153902*lmd**2/(lmd**2-0.0122241457)+0.256287842*lmd**2/(lmd**2-0.0595736775)+1.64447552*lmd**2/(lmd**2-147.468793) + 1
+    
+    return np.sqrt(n_squared)
+
 def n_CaF2(lmd):
     """
     Refractive index of CaF2, from Malitson, JOSA 1963
@@ -36,7 +52,122 @@ def n_CaF2(lmd):
     
     return np.sqrt(n_squared)
 
-def n_fused_silica(lmd):
+def n_Sapphire(lmd):
+    """
+    Refractive index of Sapphire
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 1.4313493*lmd**2/(lmd**2-0.0726631**2) + 0.65054713*lmd**2/(lmd**2-0.1193242**2) + 5.3414021*lmd**2/(lmd**2-18.028251**2)
+    return np.sqrt(n_squared)
+
+def n_YAG(lmd):
+    """
+    Refractive index of YAG, from Zelmon et al. 1998
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 2.28200*lmd**2/(lmd**2-0.01185) + 3.27644*lmd**2/(lmd**2-282.734)
+    return np.sqrt(n_squared)
+
+def n_MgF2_o(lmd):
+    """
+    Refractive index of MgF2, Zheng et al. 2023: n(o) 0.22–1.7 µm; 21 °C
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 0.48761*lmd**2/(lmd**2-0.043384**2)+0.39857*lmd**2/(lmd**2-0.094614**2)+2.3120*lmd**2/(lmd**2-23.794**2)
+    return np.sqrt(n_squared)
+
+def n_MgF2_e(lmd):
+    """
+    Refractive index of MgF2, Zheng et al. 2023: n(e) 0.22–1.7 µm; 21 °C
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 0.41343*lmd**2/(lmd**2-0.036843**2)+0.50545*lmd**2/(lmd**2-0.090762**2)+2.4905*lmd**2/(lmd**2-23.772**2)
+    return np.sqrt(n_squared)
+
+def n_Spinel(lmd):
+    """
+    Refractive index of Spinel, Tropf and Thomas 1991: n 0.35–5.5 µm
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 1.8938*lmd**2/(lmd**2-0.09942**2)+3.0755*lmd**2/(lmd**2-15.826**2)
+    return np.sqrt(n_squared)
+
+def n_BK7(lmd):
+    """
+    Refractive index of BK7, SCHOTT 0.3–2.5 µm
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 1.03961212*lmd**2/(lmd**2-0.00600069867)+0.231792344*lmd**2/(lmd**2-0.0200179144)+1.01046945*lmd**2/(lmd**2-103.560653)
+
+    return np.sqrt(n_squared)
+
+def n_LiF(lmd):
+    """
+    Refractive index of LiF, Li 1976: n 0.10–11 µm
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 0.92549*lmd**2/(lmd**2-0.07376**2)+6.96747*lmd**2/(lmd**2-32.790**2)
+
+    return np.sqrt(n_squared)
+
+def n_SF6(lmd):
+    """
+    Refractive index of LiF, Li 1976: n 0.10–11 µm
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 1.72448482*lmd**2/(lmd**2-0.0134871947)+0.390104889*lmd**2/(lmd**2-0.0569318095)+1.04572858*lmd**2/(lmd**2-118.557185)
+
+    return np.sqrt(n_squared)
+
+def n_FS(lmd):
     """
     Refractive index of fused silica, from Malitson, JOSA 1965
     Valid for 0.21 to 3.71 um at 20°C
@@ -52,6 +183,22 @@ def n_fused_silica(lmd):
     n_squared = 1 + 0.6961663 * lmd**2 / (lmd**2 - 0.0684043**2) + \
                 0.4079426 * lmd**2 / (lmd**2 - 0.1162414**2) + \
                 0.8974794 * lmd**2 / (lmd**2 - 9.896161**2)
+
+    return np.sqrt(n_squared)
+
+def n_ALON(lmd):
+    """
+    Refractive index of alon, artnett et al. 1998: 6.69 at.% N; n 0.24–5.6 µm
+    Args:
+        lmd (float or array): Wavelength in nm
+    Returns:
+        float or array: Refractive index
+    """
+
+    # convert nm to um
+    lmd = lmd / 1000
+
+    n_squared = 1 + 2.1375*lmd**2/(lmd**2-0.10256**2)+4.5817*lmd**2/(lmd**2-18.868**2)
 
     return np.sqrt(n_squared)
 

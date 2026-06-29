@@ -17,7 +17,8 @@ OPA PHASE MATCHING PLOTS WITH ALPHA OPTIMIZATION
 
 # Parameters
 alpha_values = [0, 2, 4,6] # degrees
-signal_range = (500, 700) # nm
+signal_range = (500, 900) # nm, used as window to optimize phase matching
+plot_range = (500, 900) # nm
 signal_lmd_m = 550 # used for alpha optimization, if delta_k_squares metric is chosen (minimizes sum of delta_k^2 over signal range, with phase matching at this wavelength)
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm
@@ -43,7 +44,7 @@ if __name__ == "__main__":
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 8))
     
-    lmd_s_array = np.linspace(signal_range[0], signal_range[1], 100)
+    lmd_s_array = np.linspace(plot_range[0], plot_range[1], 700)
 
     # make theta plots for different alpha values
     for alpha_deg in alpha_values:

@@ -132,14 +132,30 @@ def PFT_telescope(gamma_in, f1=None, f2=None, M=None):
 
     return np.arctan(tan_gamma_out)
 
+def fresnel_reflectance(n1, n2, theta_i, pol_vector: np.ndarray = None):
+    """
+    Calculate the Fresnel reflectance for s and p polarizations at an interface.
+    """
+    R_s = ((n1 * np.cos(theta_i) - n2 * np.sqrt(1 - (n1 / n2 * np.sin(theta_i))**2)) /
+            (n1 * np.cos(theta_i) + n2 * np.sqrt(1 - (n1 / n2 * np.sin(theta_i))**2)))**2
+    
+    R_p = ((n1 * np.sqrt(1 - (n1 / n2 * np.sin(theta_i))**2) - n2 * np.cos(theta_i)) /
+            (n1 * np.sqrt(1 - (n1 / n2 * np.sin(theta_i))**2) + n2 * np.cos(theta_i)))**2
+    
+    if pol_vector is None:
+        return R_s, R_p
+    else:
+        pol_vector = pol_vector / np.linalg.norm(pol_vector)
+        R = (pol_vector[0]**2) * R_s + (pol_vector[1]**2) * R_p
+        return R
 
 def pulse_front_tilt_angle(phi, theta, n_prism_func, theta_apex, f1, f2, lmd_p_prism=800, lmd_p_crystal=400, full_return=True):
     """
     Calculates the pulse front tilt angle inside the BBO crystal introduced by a prism + telescope setup, 
-    depending on the incidence angle on the telescope.
+    depending on the incidence angle on the prism.
 
     Args:
-        phi (float): Incidence angle on the telescope in radians. Can be a numpy array.
+        phi (float): Incidence angle on the prism in radians. Can be a numpy array.
         theta (float): Propagation angle in the crystal relative to crystal axis, in radians.
         n_prism_func (float): Function that takes wavelength in nm and returns refractive index of the prism material.
         theta_apex (float): Apex angle of the prism in radians.

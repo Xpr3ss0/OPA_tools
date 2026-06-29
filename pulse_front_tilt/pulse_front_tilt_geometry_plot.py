@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tools import pulse_front_tilt_angle
-from materials import n_CaF2, n_fused_silica
+from materials import n_CaF2, n_FS
 from scipy.optimize import minimize_scalar
 
 

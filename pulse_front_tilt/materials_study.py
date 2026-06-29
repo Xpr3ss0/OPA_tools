@@ -1,6 +1,6 @@
 from tools import PFT_change_interface, PFT_prism_sym, PFT_prism_sym_test, PFT_prism_sym_test2, prism_pair_angles, fresnel_reflectance
-from materials import n_BBO, n_CaF2, n_FS, n_SF11, n_SF10, n_YAG, n_Sapphire, n_Spinel, n_MgF2_o, n_MgF2_e, n_BK7, n_SF6
 import numpy as np
+from refractiveindex import RefractiveIndexMaterial
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
@@ -13,12 +13,17 @@ from scipy.optimize import minimize_scalar
 theta_1_range_deg = (4, 75)                            # apex angle of first prism in degrees
 lmd = 400                                               # wavelength in nm
 bandwidth = 10                                         # bandwidth in nm
-n1_func = n_FS                                   # refractive index function of first prism
-n2_func = n_SF6                              # refractive index function of second prism
 theta_1_test_vals = [np.radians(v) for v in [6, 10, 13.1700, 14, 18]]                 # test apex angle of first prism in radians
 detuning_range = (-5, 5)
 main_plot_savedir = r'D:\VSCode Projects\OPA_tools\pulse_front_tilt\plots\material_comparison'
 save_plots = False
+
+
+###############
+## MATERIALS ##
+###############
+
+
 
 ##########
 # SCRIPT #

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from tools import pulse_front_tilt_angle
-from materials import n_CaF2, n_fused_silica
+from materials import n_CaF2, n_FS
 from tqdm import tqdm
 
 # script for plotting pulse front tilt angle and required incidence angle on prism
@@ -16,16 +16,16 @@ lmd_p_prism = 800 # pump wavelength in nm, do PFM before SHG
 lmd_p_BBO = 800/2 # pump wavelength in nm in BBO
 f1_telescope = 200e-3 # focal length of first telescope lens in m
 f2_telescope = 50e-3 # focal length of second telescope lens in m
-material = 'CaF2'  # 'CaF2' or 'FS'
+material = 'FS'  # 'CaF2' or 'FS'
 pol_vector = np.array([0, 1])  # example polarization vector, pol[0]: s-polarization, pol[1]: p-polarization
-apex_range = (np.radians(30), np.radians(90))  # apex angle range to consider in radians
+apex_range = (np.radians(42.194), np.radians(42.195))  # apex angle range to consider in radians
 
 
 
 # n_funcs
 materials_n_funcs = {
     'CaF2': n_CaF2,
-    'FS': n_fused_silica
+    'FS': n_FS
 }
 
 
