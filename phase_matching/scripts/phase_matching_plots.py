@@ -16,9 +16,9 @@ OPA PHASE MATCHING PLOTS WITH ALPHA OPTIMIZATION
 """
 
 # Parameters
-alpha_values = [0, 2, 4,6] # degrees
-signal_range = (500, 900) # nm, used as window to optimize phase matching
-plot_range = (500, 900) # nm
+alpha_values = [0, 2, 3, 3.6] # degrees
+signal_range = (550, 750) # nm, used as window to optimize phase matching
+plot_range = (400, 900) # nm
 signal_lmd_m = 550 # used for alpha optimization, if delta_k_squares metric is chosen (minimizes sum of delta_k^2 over signal range, with phase matching at this wavelength)
 lmd_p = 400 # nm
 L = 1e-3 # 1 mm

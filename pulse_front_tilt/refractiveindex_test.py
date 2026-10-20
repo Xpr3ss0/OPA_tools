@@ -1,7 +1,17 @@
 import numpy as np
 from refractiveindex import RefractiveIndexMaterial
+from pathlib  import Path
 
+db = Path.home() / ".refractiveindex.info-database" / "data" / "specs" / "ohara" / "optical"
 
-SF11 = RefractiveIndexMaterial(shelf="specs", book="SCHOTT-optical", page="N-FK58")
+print(db)
 
-print(SF11.get_refractive_index(589))  # Calculate refractive index at wavelength 0.589 micrometers
+materials = sorted(p.stem for p in db.glob("*.yml"))
+
+print(f"{len(materials)} materials found.")
+print(materials[:20])
+
+for mat in materials:
+    print(f"{mat}")
+print(db.parts[-2].upper())
+

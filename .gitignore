@@ -1,3 +1,4 @@
 .venv
 LWE_results
 **/__pycache__/
+pulse_front_tilt/material_data/*

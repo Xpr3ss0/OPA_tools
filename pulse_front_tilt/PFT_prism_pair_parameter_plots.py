@@ -1,5 +1,5 @@
 from tools import PFT_change_interface, PFT_prism_sym, PFT_prism_sym_test, PFT_prism_sym_test2, prism_pair_angles, fresnel_reflectance
-from materials import n_BBO, n_CaF2, n_FS, n_SF11, n_SF10, n_YAG, n_Sapphire, n_Spinel, n_MgF2_o, n_MgF2_e, n_BK7, n_SF6
+from refractiveindex import RefractiveIndexMaterial
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -13,18 +13,27 @@ from scipy.optimize import minimize_scalar
 theta_1_range_deg = (4, 75)                            # apex angle of first prism in degrees
 lmd = 400                                               # wavelength in nm
 bandwidth = 10                                         # bandwidth in nm
-n1_func = n_FS                                   # refractive index function of first prism
-n2_func = n_SF6                              # refractive index function of second prism
 theta_1_test_vals = [np.radians(v) for v in [6, 10, 13.1700, 14, 18]]                 # test apex angle of first prism in radians
 detuning_range = (-5, 5)
-main_plot_savedir = r'D:\VSCode Projects\OPA_tools\pulse_front_tilt\plots\material_comparison'
+main_plot_savedir = r'D:\VSCode Projects\OPA_tools\pulse_front_tilt\plots\material_comparison\targeted_analysis'
 save_plots = False
 
+
+###############
+## MATERIALS ##
+###############
+
+mat1 = RefractiveIndexMaterial(shelf="glass", book="fused_silica", page="Malitson")
+mat2 = RefractiveIndexMaterial(shelf="specs", book="CDGM-optical", page="ZF2")
+mat1_name = "SF4"
+mat2_name = "CaF2"
 ##########
 # SCRIPT #
 ##########
 
 # refractive indices
+n1_func = mat1.get_refractive_index
+n2_func = mat2.get_refractive_index
 n1 = n1_func(lmd)                           # refractive index of first prism
 n2 = n2_func(lmd)                           # refractive index of second prism
 
@@ -220,12 +229,10 @@ ax1.set_ylabel('Second prism apex angle (deg)')
 
 ax1.legend()
 ax1.grid()
-mat_1_name = n1_func.__name__[2:]
-mat_2_name = n2_func.__name__[2:]
-fig.suptitle(f'Prism pair parameters for {mat_1_name} and {mat_2_name} at {lmd} nm', fontsize=14)
+fig.suptitle(f'Prism pair parameters for {mat1_name} and {mat2_name} at {lmd} nm', fontsize=14)
 
 if save_plots:
-    plot_name = f"{mat_1_name}_{mat_2_name}"
+    plot_name = f"{mat1_name}_{mat2_name}"
     fig.savefig(f"{main_plot_savedir}/{plot_name}.png", dpi=300)
 
 # plot detuning error

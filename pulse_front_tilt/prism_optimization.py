@@ -11,10 +11,10 @@ alpha_degree = 3.7  # Pump-signal angle in degrees
 theta = np.radians(31.2) # critical phase matching angle in radians
 
 # Prism parameters
-lmd_p_prism = 800 # pump wavelength in nm, do PFM before SHG
+lmd_p_prism = 400 # pump wavelength in nm, do PFM before SHG
 lmd_p_BBO = 800/2 # pump wavelength in nm in BBO
 f1_telescope = 200e-3 # focal length of first telescope lens in m
-f2_telescope = 50e-3 # focal length of second telescope lens in m
+f2_telescope = 100e-3 # focal length of second telescope lens in m
 material = 'FS'  # 'CaF2' or 'FS'
 pol_vector = np.array([0, 1])  # example polarization vector, pol[0]: s-polarization, pol[1]: p-polarization
 

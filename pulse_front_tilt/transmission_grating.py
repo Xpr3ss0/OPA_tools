@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # PARAMETERS #
     ##############
     lmd = 800  # wavelength in nm
-    groove_densities = [100, 200, 300]  # lines per mm
+    groove_densities = [300, 500, 600]  # lines per mm
     theta_i_range = (0, 60) # incident angle range in degrees
 
 
